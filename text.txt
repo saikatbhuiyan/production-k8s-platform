@@ -1,0 +1,3877 @@
+Let's now discuss labels and selectors in details.
+
+Labels provide a way for us to identify and group resources meaningfully.
+
+They are key value pairs and they can be attached to many types of Kubernetes objects.
+
+For example pods, nodes, services, deployments, replica sets.
+
+Most of the things and objects that you create in Kubernetes, you can probably attach labels to them.
+
+They provide metadata that help us both identify and organize this objects.
+
+As you can see here on the right side, whenever we are creating the pod here, we are defining a series
+
+of labels under the metadata section.
+
+We have done that several times, so you should already be familiar with adding and managing these labels.
+
+And we can then leverage the labels here to select them, for example, to receive traffic from a specific
+
+service.
+
+Labels allow us to categorize and organize the resources, and they enable sophisticated grouping and
+
+selection mechanism.
+
+So that's important because we can really get very fancy with labels and selectors.
+
+Not that we have to, but the functionality is there in case we need it.
+
+Labels are not unique in comparison to, for example, name here in the Pod metadata.
+
+This needs to be unique within a namespace in a cluster.
+
+Labels do not need to be unique.
+
+So we can have, for example, two different pod definitions or two different pods having the label
+
+app set to color API.
+
+That is perfectly fine.
+
+Selectors are then expressions that we use to filter Kubernetes objects based on their labels.
+
+The selectors allow the users and Kubernetes components as well to target a specific objects that match
+
+certain criteria.
+
+So let's say that we are interested only in the pods that belong to the color API app.
+
+We can then add this filtering functionality to our kubectl get pod command and it will return only
+
+the pods that belong to or that actually have the label app set to caller API.
+
+There are two ways we can go about selectors and labels, so let's create here a little example.
+
+I have five pods.
+
+They have roughly or slightly different labels.
+
+So you can see here there is one pod which is a color API app in the dev environment front end here.
+
+And it is a stable release.
+
+We have then the back end here of this color API, and we have both a stable and a canary release for
+
+the color API back end in the dev environment.
+
+Some other example here.
+
+E-commerce pod is also present in both the dev and the prod environment, and it is both back end and
+
+stable.
+
+So let's see how we could go about selecting some of these pods here by leveraging selectors in Kubernetes.
+
+The first group of selectors we have in Kubernetes are called the equality based selectors.
+
+And they are the older type, so they are still valid.
+
+We can still use them and they match objects that have a specific label key value pair.
+
+So here we can also specify multiple of them.
+
+And when we are using the kubectl cli we can also use the different here.
+
+So let's have a look at how this would look like in a configuration file.
+
+We would set a selector with match labels like so or for some other types of selectors here.
+
+Then we could also just list the labels directly here, as we saw with the service in the previous slide.
+
+And in this case here, the selector is going to look for pods that match both these conditions.
+
+Right.
+
+So the app needs to be color API and the tier needs to be back end.
+
+So in this case here it's gonna return these two pods both the stable and the canary releases.
+
+The second type of selectors are the set based selectors.
+
+And they can be used to match objects based on whether a label's key is part of a set of values.
+
+So we can use operators like in, not in exists and does not exist, so the exists and does not exist.
+
+They will actually just look at the whether the label is present altogether or not independently of
+
+the value.
+
+As long as the key informed here in the selector exists, then the selector will return a positive match.
+
+Let's have a look at some examples.
+
+The first one is a selector where we are looking at the ticker key, and we are returning all the pods
+
+that are belonging to either the front end or the back end tiers.
+
+As you can see the match expressions formulation here the structure.
+
+The syntax is different than the match labels.
+
+We are not directly specifying key value pairs.
+
+Instead, we are passing a list of expressions, and each expression is expected to have three elements
+
+here.
+
+The first one is the key that we are going to look at.
+
+So that's going to be app or tier or the environment here.
+
+The second one is which operator to use.
+
+Whether this is going to be in not in exists and does not exist.
+
+And the third one are the values that we will consider for the operation.
+
+So if we say that we are looking at the tier label and the operation is in, and then we pass a list
+
+of values here, then this selector will return any pods that belong to or that have here set the tier
+
+to either back end or front end.
+
+Let's now suppose that we wish to return all the pods that are not belonging to a canary release, so
+
+we do not have a not equal here operator that we can use, but we can emulate that by actually having
+
+a slightly different operator here.
+
+And we will say that the release key or the label release must not be inside of an array containing
+
+only the canary value.
+
+So this will return all the pods that do not belong to a canary release.
+
+Now we could do the opposite here.
+
+We could say release in stable, for example.
+
+But let's say that we have different releases.
+
+We have a stable, we have pre-release, we have Canary, we have test, we have dev.
+
+We might have multiple types of releases here.
+
+And if we're interested in excluding a single type or excluding a set of values, then the not in is
+
+better than doing the other way around.
+
+Because if we use the in here, then we would have to specify all the other variants, and we might
+
+not either not be aware of all of them, or there might be many variants, many different possibilities
+
+that we need to consider.
+
+Great.
+
+That's it for this theoretical discussion.
+
+
+Let's then start practicing a little bit how we can work with labels and selectors in Kubernetes.
+
+I'm starting once again in an empty folder here.
+
+There is nothing inside of this folder.
+
+I'm just going to add the files here.
+
+Let's then open this folder in Visual Studio Code or in your IDE of preference.
+
+And let's create a couple of files in the IDE.
+
+Let's then simply create one file.
+
+Here we're going to call this color API dot YAML.
+
+And we will have the definition of two pods here.
+
+So the API version will be v1.
+
+Kind will be pod.
+
+We will then add some metadata here.
+
+And this is the actually the important part here for us.
+
+So this pod here is going to be the color back end.
+
+Right.
+
+So just color back end here.
+
+And the labels we're going to add an app label that belongs to the color API.
+
+We're going to say that the environment here is going to be local.
+
+So environment will be local and the tier here, the tier will be back end.
+
+All right.
+
+So just color API.
+
+The color back end belongs to the back end side of the business.
+
+And then environment here is local because we are running this in our machines.
+
+Let's then define the specification here.
+
+And the specification will just have a list of containers.
+
+The name will be color back end.
+
+And then the image here will be LM Academy forward slash color dash API 1.1.0.
+
+Or if you wish to use your username, that's also perfectly fine.
+
+We'll just advertise one part here that's going to be container port 80.
+
+Right.
+
+So this is the definition for the first pod.
+
+I'm going to copy this here and let's paste this at the bottom.
+
+We're going to add three dashes here to define a new resource under this pod.
+
+And then we're going to define a color front end.
+
+Now we don't have a custom container for color front end.
+
+So let's just use here the traditional nginx image.
+
+I'm just going to use here for the image nginx and the version will be 1.27.0.
+
+Let's also change the tier here to front end.
+
+Since this is part of the front end, the app remains the same.
+
+That's the color API.
+
+App and environment is going to be local.
+
+Great.
+
+That's all we're going to create for now, let's save this and come back to the terminal to create this
+
+resources and see how we can specify different filters in kubectl to get only a subset of them back
+
+at the terminal.
+
+Let's clear our screen.
+
+We're going to then apply the current directory here to pods will be created.
+
+If we simply run kubectl get pods we're going to get both of them.
+
+The both of them are container creating probably downloaded image here.
+
+Soon they should be in a running state.
+
+The first thing I want to show you is that we can add specific labels to the result of kubectl get pods
+
+by using this syntax here.
+
+So get pods and then we add a dash capital L and then without any space here the name of the label.
+
+So if we add a Dash L app here then you will see that we get the app label added to the results of this
+
+query.
+
+If we add a space here, this is also working fine.
+
+So you can use any of the these variants here.
+
+So that's the first thing.
+
+If you want to add another label here then we can add L for L app.
+
+And then we can also add the tier.
+
+And we can then compose this here as we wish to return information from our query.
+
+Great.
+
+Let's clear the screen and let's see how we can actually filter pods based on the labels we defined.
+
+For us to filter by labels, we will use the dash lowercase l flag here.
+
+So we're going to say get pod and then we'll pass dash lowercase l.
+
+And then we can pass here the filters that we wish to use.
+
+So we can use.
+
+For example app is equal to caller API.
+
+This is something that's possible to do.
+
+We can also pass the tier here equals front end.
+
+And so front end here.
+
+And then we start getting only the pods that belong to the front end tier or that have the tier set
+
+to the front end value.
+
+We can also combine different labels here by running get pod.
+
+And then we can either use an or approach where we're going to say tier equals to front end and then
+
+pass another label here, another dash lowercase l.
+
+And we'll say app is equal to caller API for example.
+
+And this is going to return both of the pods here.
+
+Or we can use an end condition where we pass a comma in addition to the first filter that we have.
+
+And I'm just going to add single quotes here to make sure that this is passed correctly.
+
+And the moment we do that, this will create an end condition.
+
+That means this both conditions here, they need to be satisfied.
+
+We can also use set based operators by running Gitpod.
+
+And let's pass here the label and then we'll simply say here tier in.
+
+And then we need to pass parentheses here and let's say front end front end.
+
+So this will return only the pods that have the tier label set in any of the values that are within
+
+this list.
+
+Here we can use the not in reverse here in case we want to exclude a specific value.
+
+And we don't know all the universal values.
+
+So this can also be useful if we just want to exclude for example all the front end pods but return
+
+back end or maybe workers or any other kind of pods that do not belong to the front end tier.
+
+This can then be very helpful to narrow down the results of our search here, especially when we have
+
+many pods running in our cluster and we want to filter it down based on identifying information.
+
+Let's take a short break and come back in the next lecture to continue exploring labels and selectors
+
+in more details.
+
+
+Before we get started, let's just make sure that we delete all the resources we have created within
+
+our label selectors folder here.
+
+And I would like to go back to the IDE and create yet another file to define a deployment in the IDE.
+
+Let's create here once again color deployment.
+
+Let's call this color deploy dot YAML API version will be apps forward slash v1.
+
+And then we will have a kind of deployment.
+
+I'm just going to leverage the autocomplete here to help me with that is going to be the color API deployment.
+
+Right.
+
+So I'm just going to use color API like so let's remove the duplication here on the top.
+
+You should be familiar already with all these things here.
+
+Let's just adjust here at the bottom.
+
+Make sure that the container definition is looking good.
+
+LM Academy forward slash color API 1.1.0 or whatever you are using here.
+
+We will also add a couple of additional labels.
+
+We're going to say that the environment here is going to be local.
+
+And then we will also say that the tier will be back end like so.
+
+So very similar to the pods we have created in the previous lecture.
+
+Let's also change the port here to port 80, and I believe that the container specifications are good
+
+to go.
+
+And I want to spend a few minutes on this selector section here, because this is something that we
+
+will see over and over again when working with Kubernetes and defining how to select and manage different
+
+objects under different circumstances.
+
+So here the example is a selector for a deployment to manage pods.
+
+But this is also applicable when we are for example establishing rules for pod placement in different
+
+nodes.
+
+So this pattern here you will see multiple times.
+
+And it's good that we get used to these two match labels and the match expressions configuration.
+
+Let's start with the match labels.
+
+And this is very straightforward.
+
+So the match labels here we just specify a bunch of key value pairs.
+
+This itself is an object or a map where each key is going to be a label of our pod, and each value
+
+is going to be the value of that label.
+
+So basically we're just going to copy all this and place it here under match labels.
+
+Let's remove this here like so.
+
+And now we can also use more advanced filtering or selection operations here with the match expressions.
+
+So the limitation of match labels is for example we cannot use in or not in operators.
+
+We cannot define complex matching rules.
+
+And it might be the case that we are interested in using this more advanced logic here.
+
+One very common example that we come across often when working with infrastructure is that we have some
+
+sort of managed label that indicates that a certain resource is managed by some other application or
+
+third party software.
+
+So let's add this here.
+
+We're going to have a single.
+
+So the match expressions key here it takes a list an array of objects instead of a single map here containing
+
+key value pairs.
+
+It takes a list of objects and each object has 2 or 3 properties.
+
+Remember the key property is here.
+
+This is going to define the label itself.
+
+We then have operator, and the operator will define which operator we wish to use.
+
+So this can be in.
+
+This can be not in.
+
+This can be exists for example.
+
+And if the operator is exists or not exist or actually this is does not exist not not exists.
+
+So if it is does not exist then we only need these two properties.
+
+If the operator here is in or it is not in, then we need to specify another list here and it is a list
+
+of values.
+
+Right.
+
+So values here that's going to be a list in itself.
+
+And then we'll simply pass here a list of values.
+
+This can be represented with a square brackets.
+
+Or it can also be passed as dashes here indented under values.
+
+So we could for example say here match expressions.
+
+And we could let's say release.
+
+and the release here is going to be stable.
+
+We could say that the release here should not be in Canary releases, right?
+
+So this deployment here is only going to manage stable pods.
+
+So it's going to exclude any release here that is not Canary.
+
+This might be a little bit tricky here, especially if we have multiple releases.
+
+Because this could end up leading this deployment here to manage all the releases in addition to stable.
+
+Because let's say we have another release here, maybe some development release.
+
+And this development release is then satisfying this condition, but it's managed by another deployment.
+
+So there could be overlap here.
+
+It's very important that we avoid these overlaps.
+
+Otherwise we are actually risking entering into very tricky territory here.
+
+And Kubernetes might actually stop working as expected.
+
+One use case that I find interesting for this match expressions is to actually use the key managed here,
+
+and just say, hey, if this key managed exists, then we are good to go.
+
+We are managed by a deployment.
+
+This might not seem much, but the moment that we look at the color API here and the color backend,
+
+we can see that the set of labels with app color, API environment and tier back end.
+
+Here they are exactly the same as this set of labels here.
+
+So that would be an issue if we wanted to create this pod here individually from the deployment with
+
+this set of labels.
+
+So one way that we could go about it and once again, I'm not saying that you have to do it, I'm just
+
+taking this as a like a learning exploring example.
+
+So one way for us to do that is to simply set the managed tag or the managed label here to true, for
+
+example, or to say deployment.
+
+It doesn't really matter the value that we add here because we are looking at the exists operator.
+
+So as long as the tag managed or as long as sorry, as long as the label managed is present in the resource,
+
+then this resource will match this expression here.
+
+All right.
+
+So let's see if we can save this.
+
+Let's come back to the terminal and let's try to apply the entire directory here to see what's going
+
+to happen.
+
+Back in the terminal, we're going to simply run kubectl apply the entire directory here.
+
+And now let's have a look at our pods.
+
+And as you can see here we have one pod color back end that was successfully created.
+
+And we have also one pod that was created for the deployment.
+
+We didn't specify the number of replicas in the deployment definition.
+
+So let's go back to the IDE and let's set this option in the IDE.
+
+Let's set replicas here to three.
+
+Let's save this and let's come back to the terminal.
+
+In the terminal let's now apply this once again.
+
+So kubectl apply let's apply the current directory.
+
+Here we have configured our deployment.
+
+We should now start scaling things up.
+
+And as you can see perfect.
+
+This is actually working as expected.
+
+So the caller back end here even though it has the same set of labels that are present here in our deployment
+
+pods, it's not being considered by the deployment and by the replica set here because it is not setting
+
+the label managed to any value.
+
+We could then visualize this here with Dash L app.
+
+Dash L tier.
+
+Dash L environment and environment like so.
+
+And Dash L managed.
+
+The moment we do that, we will see here.
+
+Oops.
+
+That is not very clear to see.
+
+But so let's then just remove a few things here.
+
+So let's remove the environment.
+
+And I believe that this would be a little bit easier.
+
+No.
+
+Still need to remove one more.
+
+So let's remove the app.
+
+Since this is the same.
+
+Perfect.
+
+And that's a little bit easier for us to see.
+
+So as you can see the color back and it is in the back end tier.
+
+And if you have a slightly wider screen here, you can also see that all the other labels are matching.
+
+But it is not being considered by the deployment because it does not have the managed label here set
+
+to any value.
+
+Now this match expression, just to wrap up this lecture here, this match expressions can be very powerful.
+
+So we can add also other elements here.
+
+Let's say key tier operator.
+
+Oops.
+
+That should be just a value.
+
+So operator should be in and.
+
+Oops sorry for that.
+
+That's autocomplete.
+
+And the values here would be let's say back end.
+
+Right.
+
+So now or we could also say back end and cache maybe let's say something like this.
+
+Right.
+
+So we are just I'm just showing you here.
+
+I'm not saying that you should do this with deployments specifically.
+
+As you might see, this can be very useful when we are selecting nodes to place our pods.
+
+But this is not something we would do with a deployment.
+
+Right.
+
+So deployments I would recommend not keeping such set based selectors here.
+
+I would recommend keeping them to a minimum and to simple operations, because otherwise it might be
+
+hard to identify what's the actual scope of the deployment.
+
+And it's much harder to avoid overlap between deployments.
+
+So keep it simple.
+
+Just be mindful that we can get very powerful with this match expressions configuration option here.
+
+And that's what I wanted to present and discuss in this lecture.
+
+Let's take a short break and come back in the next lecture.
+
+
+
+Let's briefly discuss annotations and how we can leverage them in our Kubernetes resources.
+
+Annotations are a great way for us to add useful information and configuration to resources.
+
+So on the right here we have one example of how we can add annotations to configure an ingress that
+
+is backed by an nginx ingress controller.
+
+Now, we haven't discussed Ingresses.
+
+We haven't discussed nginx ingress controllers.
+
+So I don't expect you to know exactly what these annotations are actually doing.
+
+But the bottom line here is that they are being used to configure a certain ingress to configure the
+
+behavior of our resource.
+
+So annotations are key value pairs attached to Kubernetes objects, just like labels, don't you think?
+
+Key value pairs here.
+
+But unlike labels, annotations are not supposed to store identifying metadata, and they are often
+
+used by tools or by the Kubernetes system itself to configure certain services or to perform other activities.
+
+There are some common some common use cases around it.
+
+So first of all, tool specific metadata and configuration.
+
+That's what we have here on the right.
+
+So external tools such as monitoring systems or agents for logging systems may leverage annotations
+
+to attach custom data to resources.
+
+Let's say for example, that we whenever we are logging something, we wish to add some additional data
+
+here to the resources.
+
+We might also add it in the annotations section.
+
+Annotations can also be used to configure ingress controllers.
+
+That's exactly what we are doing here on the right.
+
+And you can see here that we are configuring SSL redirection.
+
+And we are forcing that HTTP traffic is redirected to Https traffic.
+
+So for example we can define path rewrites, custom load balancing and other things.
+
+Now this depends on how the ingress controllers, how the application here is actually being developed
+
+and how we can how it expects us to use annotations.
+
+So this is very application or system specific.
+
+Another use case is that we might want to store, build and version information.
+
+So annotations can be used to store metadata such as the timestamps of the builds.
+
+The version numbers.
+
+If we wish to store the commit hash from git so that we can quickly retrieve which exact commit led
+
+to this resource in a certain current state, and we can also use this for runtime configuration for
+
+operators.
+
+So some certain Kubernetes operators or controllers, they can use annotations to customize their runtime
+
+behavior for specific resources.
+
+The structure of annotations is as follows.
+
+So we can have a prefix which must be a DNS valid DNS subdomain here.
+
+So you can see this really looks like a DNS subdomain.
+
+And this is expected.
+
+This is necessary for automated system components either from the Kubernetes side or as from from other
+
+third party providers, which are adding annotations to the objects that are created by us.
+
+So if automated systems are adding annotations behind the scenes, then they are expected to provide
+
+such a prefix.
+
+If the prefix is omitted, then the key here is actually presumed to be from a private user, namely
+
+from us, right?
+
+So we can add ourselves annotations however we want.
+
+But if automated systems are adding annotations, then they are expected to have this prefix in addition
+
+to the prefix.
+
+Then annotations should also have a name that needs to be less than 63 characters and contain only this
+
+characters here.
+
+All right, so that's it for annotations.
+
+You probably come across annotations much more often as you start working with other automated systems.
+
+And just for you to keep in mind that if you see some documentation around, hey, set annotations to
+
+these and that value to actually configure how the certain object here is working, then this is also
+
+common practice in Kubernetes.
+
+
+
+Help us improve isolation for groups of resources.
+
+But before we actually enter into the discussion around namespaces, let's understand how they can be
+
+helpful.
+
+So let's imagine we have a Kubernetes cluster here.
+
+And we have a couple of applications deployed.
+
+We have an e-commerce back end deployed a payment back end deployed.
+
+We have some database statefulsets here up and running with a couple of pods.
+
+We have a few more services ingresses jobs and whatnot in our cluster.
+
+Now we decide that we actually want to deploy this into another environment.
+
+So basically we have a dev environment here.
+
+And then we also deploy a prod environment, basically roughly the same thing, except that there are
+
+a few more constraints here around which versions, which images are actually deployed to prod.
+
+But without namespaces, everything is really living under the same house.
+
+Think about it as a big house without rooms, just one big room with a lot of different families living
+
+together here.
+
+And of course, the Kubernetes cluster is running on some hardware.
+
+So we have CPU and we have memory constraints here.
+
+And these are the constraints of the hardware itself where Kubernetes is running.
+
+Now let's try to extrapolate our imagination a little bit.
+
+And what happens when one of the families, when one of the services here really starts to grow and
+
+consume a lot of resources.
+
+So now the service is really consuming almost all of the CPU and all of the memory.
+
+And if there is no separation, if there are no boundaries here to the service, then this will actually
+
+start impacting unrelated pods, unrelated applications.
+
+This is going to start killing pods here, or might start killing pods from other deployments, from
+
+other stateful sets from other environments here, including the production environment.
+
+So what would happen if the entire payment back end service here is down and there is no way to pay
+
+anything anymore?
+
+So in the worst case scenario, one of these little services here, going astray and starting consuming
+
+a lot of resources can lead to the whole cluster really blowing up and having a lot of unintended and
+
+very harmful consequences.
+
+So isolating parts of our application or different environments.
+
+Logically, it does make sense because it gives us a very good layer of protection here for other resources
+
+inside of the cluster.
+
+So namespaces provide a way for us to divide cluster resources between multiple users, multiple teams,
+
+or multiple applications, or even multiple environments.
+
+It really depends on which dimension you want to use here.
+
+It allows us for resource isolation or it allows for resource isolation.
+
+And it helps us organize workloads in large Kubernetes cluster.
+
+So they enable logical isolation of resources within the same physical cluster.
+
+That means we don't really need to create an entire new cluster and keep it separate from one another.
+
+We can use namespaces to achieve this logical isolation.
+
+Kubernetes ships normally with four initial namespaces the default namespace, which is where everything
+
+is launched Whenever we don't specify a namespace, we then have the kube system namespace, which is
+
+reserved for Kubernetes resources themselves and the Kubernetes software running in the cluster.
+
+We have the kube public namespace, which is intended for publicly available resources that any user
+
+could access.
+
+And then we have the kube node lease namespace, which serves purposes of managing leases, which are
+
+then needed by the Kubelet to actually communicate the node health, so that the Kubernetes system can
+
+get feedback from the Kubelet regarding whether a node is available and healthy or not.
+
+Some common use cases for namespaces.
+
+Whenever we have multi-tenant clusters with multiple teams, we can use namespaces to give each team
+
+the ability to take care of their applications and keep their resources logically separated.
+
+We can also use namespaces for environment separation.
+
+So if you want to ensure that the dev namespace here, as we have on the on the right, is separated
+
+from staging and separated from production, we can use namespaces for that, we can also apply different
+
+policies and quotas to each of these namespaces here so we can manage access and resource utilization
+
+separately.
+
+So resource quotas.
+
+Once again here if we wish to limit the CPU, the memory and the number of resources that a namespace
+
+can use, then resource quotas is a good way coupled together with namespaces.
+
+And this prevents one team or environment from monopolizing cluster resources, for example.
+
+Last but not least, security and access control is another important thing.
+
+Let's say that we want to limit which user or service account can access specific resources within the
+
+cluster.
+
+We can use namespaces.
+
+And let's say that to access the production resources here, you would need to have a certain level
+
+of permissions which is different or which is probably more strict than the permissions necessary to
+
+access the dev namespace.
+
+This ensures that users or services can only access resources within their allowed namespaces, and
+
+it's a very common use case for leveraging namespaces to restrict access to certain cluster resources.
+
+Good.
+
+So a few words on using namespaces.
+
+We're going to practice a lot of this later on.
+
+But we must inform in which namespace we wish to create our resources.
+
+So whenever we are using kubectl, for example, or whenever we are creating our pod or our resource
+
+definition files, we need to specify the namespace except if we wish to deploy them on the default
+
+namespace.
+
+Then we don't need to specify, but in any other case, we need to specify in which namespace we wish
+
+to create the resources.
+
+We can also set a current namespace for all kubectl commands, or we can pass it explicitly in each
+
+command.
+
+And last but not least service communication if it is reaching across namespaces.
+
+So let's say that some service here from the staging namespace, or let's say actually that a pod from
+
+a staging namespace wants to talk to a service in the dev namespace.
+
+Then we would have to use the fully qualified domain name here of the service instead of just the service
+
+name.
+
+One example here would be to, let's say, to have a fourth name space in addition to dev staging and
+
+production, which would be, let's say, a monitoring namespace where we are deploying a single solution
+
+to our whole Kubernetes cluster.
+
+And we want our pods to talk from all these three namespaces here to the monitoring namespace.
+
+Then if there is any service there, we would need to use the fully qualified domain name.
+
+We're going to see how this fully qualified domain name looks like in the practical sessions.
+
+So don't worry about it.
+
+If this is not 100% clear, it's going to be in just a couple of lectures.
+
+Great.
+
+Now a few best practices around namespaces.
+
+First of all, don't overuse them just because they are there.
+
+It doesn't mean that you need to create a namespace for every single little thing.
+
+So consider whether there is a solid case for logically isolating cluster resources, either limiting
+
+the the physical resources that they should be able to consume, or protecting the resources via role
+
+based access control.
+
+Then if there is a solid case.
+
+By all means, go ahead with it.
+
+But just don't overuse name spaces just because they are there.
+
+As I already mentioned, it's good practice to combine name spaces with role based access control to
+
+improve security around resources deployed in each namespace, and if we also wish to limit the resources
+
+a namespace can use, then we should by all means use resource quotas, and this is a best practice
+
+to prevent a namespace from consuming all the available cluster resources.
+
+Last but not least, use meaningful dimensions to define the namespaces.
+
+So normally or.
+
+Several common choices include as already mentioned, teams, applications, environments.
+
+So pick something that makes sense from the overall team and environment setup for your project, so
+
+that others working on it can also intuitively understand the structure of your namespaces and how to
+
+work with them.
+
+Great, that's it for this theoretical discussion.
+
+
+
+Namespaces are a great way for us to isolate our resources within the cluster and create logical partitions.
+
+So let's start exploring how we can work with them.
+
+Namespaces are Kubernetes objects.
+
+That means we can create them using declarative files.
+
+We can also create them via the kubectl cli.
+
+Let's follow the declarative style.
+
+So let's just create a new file.
+
+Here we're going to call this dev ns dot YAML.
+
+And this namespace here has one of the simplest declarative or one of the simplest configurations.
+
+So once again API version is there.
+
+That's going to be v1.
+
+The kind here is there that's going to be namespace kind is namespace like so namespace.
+
+And the namespace object has no spec section.
+
+It has a metadata section which has then a name that's going to define the name of the namespace.
+
+And we can set this to whatever we want.
+
+Let's save this here.
+
+So as you can see very simple here.
+
+Let's save this.
+
+Let's come to the IDE and let's apply the changes in the IDE.
+
+Make sure you are inside of whatever folder you created the namespace file.
+
+And we can once again kubectl apply dash f with the current directory.
+
+And we can see that the namespace dev was created.
+
+If you now run kubectl get namespace, this is going to return all the namespaces that we have in our
+
+cluster.
+
+And as you can see, in addition to the one we have just created, there are four namespaces that are
+
+shipped here by Kubernetes.
+
+The default one kube node, lease, cube public and cube system.
+
+Once we run any commands here with for example kubectl get pods, we will see that it returns no resources
+
+found in the default namespace.
+
+We can specify the namespace for this kind of commands here.
+
+So actually for most of the commands in kubectl, by simply passing the dash n or the dash dash namespace
+
+flag here and then passing the value of the namespace so we can see the pods that are running in the
+
+kube system namespace.
+
+And as you can see, there are quite a few pods here.
+
+This is all Kubernetes software.
+
+Kube scheduler is here.
+
+The kube proxy is here, the controller manager the API server, the core DNS, the etcd store.
+
+So as you can see there are lots of pods here that are running and delivering most of the functionality
+
+of the Kubernetes system.
+
+So let's now create a new pod inside of our dev namespace in the IDE.
+
+Let's create a new file here.
+
+Once again, let's just continue with our color API.
+
+I'm not going to do anything fancy here, so let's just directly go for a kind of pod that's going to
+
+provide a lot of autocompletion for us here.
+
+Let's replace my app with just color API like.
+
+So let's replace all of them.
+
+Image.
+
+Once again LM Academy forward slash color API 1.1.0.
+
+Let's remove the resources and let's set the port of our container to port 80 like so.
+
+For us to create a resource within a namespace, we need to pass the namespace option here under the
+
+metadata.
+
+So let's pass namespace here dev.
+
+And let's save this.
+
+Let's now come back to the terminal and apply this file in the terminal.
+
+Let's just clear the screen.
+
+Let's run kubectl apply once again.
+
+And we'll see that the pod was created.
+
+Now if we run kubectl get pod once again the pod is not running in the default namespace.
+
+Therefore it is not returned here.
+
+So we can just pass the dev namespace and we can confirm that our pod is up and running.
+
+It might be very cumbersome here to pass a specific namespace with every command.
+
+Let's say that then we want to actually describe the pod.
+
+So let's describe our pod here for example color API.
+
+And if we forget to pass the namespace dash n or dash dash namespace here, then we get an answer like
+
+oops, there is no color API pod.
+
+And that's because it is looking at the default namespace whenever we issue the command.
+
+So we'll have to come here and add the namespace dev once again.
+
+And then we get the response.
+
+Now this can be very annoying very quickly if you are working with either different namespaces or if
+
+all your pods are inside of one namespace that is not the default, then you need to keep specifying
+
+that.
+
+Of course, we can set the namespace for all our commands from now onwards by updating the context under
+
+which the kube kernel is operating.
+
+So for that the command is kubectl config set context.
+
+And then we're going to take the current context.
+
+So we could actually just have a look here.
+
+So kube config current context like so I believe that this will give us back our current context.
+
+So now we can use the set context here to set properties of our context.
+
+We're going to pass the current flag here to take into account our current context which is minikube.
+
+And then we will set here the namespace will be equal to dev.
+
+Now this is going to set the namespace dev for our current context, which means that any kubectl command
+
+that we execute from now onwards will operate under the dev namespace.
+
+So kubectl get pods that's going to return the pods under the dev namespace.
+
+And now if we wish to describe a pod describe pod color API.
+
+We don't need to worry anymore about always passing the namespace.
+
+Now this can be very good, right?
+
+But it can also be tricky.
+
+So just make sure that you keep in mind which namespace you are operating under, because it could be
+
+very easily the case here.
+
+Let's say that we set our.
+
+So we use kube config set context namespaces prod.
+
+And I was like okay the namespace pod here doesn't really exist right now right.
+
+So we don't have it here.
+
+Nothing is going to work.
+
+But let's say that we set this and we are operating on Pod doing some get and describe here kubectl
+
+get or cubical to describe and so on and so forth.
+
+And then suddenly out of nowhere, we just decide to delete something because we think, okay, yeah,
+
+I am done testing some stuff on dev.
+
+Let's now just delete our deployment here.
+
+And that's a very critical deployment, right.
+
+It's a very critical deployment here.
+
+And we run this command thinking that we are in the dev namespace.
+
+But because we have forgotten to set the context, for example, we end up deleting stuff in prod and
+
+then well you know the consequences.
+
+Everything goes down.
+
+We have a bunch of things to fix and hopefully we still have a job tomorrow.
+
+Right?
+
+So it's like, be very careful when you set this configuration like this and make sure that you are
+
+operating under the namespace that you intend to whenever you are running operations, particularly
+
+destructive operations such as kube, cuddle, delete, we can view which context we are operating under
+
+by running kubectl config view like so.
+
+And that's going to return a bunch of stuff here.
+
+But let's just scroll up a little bit.
+
+You will see here that there is actually quite a lot of information.
+
+So the cube cuddle can manage multiple clusters to begin with.
+
+Right.
+
+So first of all you if you are working with multiple clusters, maybe you have some cluster from work
+
+or different clusters, ideally even different clusters for prod and non-prod let's say.
+
+So they are completely separate.
+
+Then you might have all of them listed here.
+
+So you might have a bunch of clusters listed under cluster.
+
+And then we might also have a bunch of contexts listed under the contexts key.
+
+What's important here for us is to have a look at the current context.
+
+So that's minikube here.
+
+And we take this value and we map this value here to the context that has the corresponding name.
+
+So the name here is minikube.
+
+This matches the current context.
+
+And then we go into this object here.
+
+And we get the namespace.
+
+And then we can see that this is the prod namespace.
+
+All right.
+
+So let's just change this once again.
+
+We're going to set our context.
+
+So config set context current namespace is going to be dev once again.
+
+And then we are good to go.
+
+We can confirm that we have pods running here by running kubectl get pods like so.
+
+And let's now explore what happens when we delete a namespace.
+
+So let's set our context namespace to default.
+
+Back here we can confirm that we get no pods.
+
+And actually just before we delete stuff, let me just show you one thing here.
+
+You can let's clear the console.
+
+You can also get resources for certain commands here across all namespaces.
+
+You should add a dash capital letter A here, or uppercase A or a dash dash all dash namespaces.
+
+And this is going to return all the pods across all the namespaces that we have here in our cluster.
+
+This might be useful in case you just want to identify actually which namespace a certain pod is running
+
+on.
+
+So let's suppose here that you have a certain pod that you know the name of the pod, but you don't
+
+know the actual namespace where that pod is.
+
+You might use the all namespaces or the dash a like so to get a list of all the pods.
+
+And then you can identify ah, okay.
+
+The pod is actually under the dev namespace.
+
+Good.
+
+Let's then set here our context to dev and then continue with our operations.
+
+Right.
+
+So I just cancel this operation here.
+
+Just make sure to cancel not to run this.
+
+And you can confirm that we still have here.
+
+Let's have a look kubectl config or if you actually run it.
+
+So just undo it by running kubectl config set context namespace default.
+
+And then we are good to go.
+
+All right.
+
+Deleting a namespace.
+
+So kubectl delete dash f and then let's pass the current directory here or actually no, no, let's
+
+let's not pass the current directory.
+
+Let's pass just the dev dash and s here.
+
+So dev namespace dot YAML.
+
+And I'm passing only this file here because we have multiple files inside of our directory.
+
+We also have a color API pod.
+
+And I want to show you what happens with this pod here when we delete the namespace.
+
+So I'm just going to run kubectl delete f dev and s dot YAML.
+
+And this is going to delete the namespace.
+
+Now what's your guess what's going to happen with the pod.
+
+Well if you guess that the pod is gonna stay there forever, that is not really what's going to happen.
+
+And if you guess that the pod is going to be gone, well then congratulations, the pod is just gone.
+
+So if we run our kubectl get pods, we will see no pods on the default namespace.
+
+That's fine, but if we add the dash a here, our pod, our color API pod is gone forever.
+
+If you have resources running inside of a namespace and you delete that namespace, then the resources
+
+will be deleted.
+
+So be extremely careful about deleting namespaces.
+
+You should also use security role based access control to really limit who can delete namespaces inside
+
+of your cluster.
+
+Actually, who can manage namespaces altogether inside of a cluster.
+
+But this can be a very, very destructive operation.
+
+Be very careful about it.
+
+All right.
+
+So that's it for our initial discussion around namespaces.
+
+Hopefully it is more clear now how to work with them both in the configuration side.
+
+How do we create a namespace declaring it in YAML as well as in the kubectl side?
+
+How we can use namespaces by either setting the current context here to be restricted to a specific
+
+namespace, or by passing this namespace as part of our commands.
+
+
+
+Let's now explore how we can communicate to services that are living in another namespace in our cluster.
+
+Up until now, we have a dev namespace and we have our caller API pod living also inside of this dev
+
+namespace.
+
+Let's create a service to expose this pod.
+
+Here we're going to use once again just the definition file here.
+
+So API version is going to be v1.
+
+Kind will be service.
+
+And then let's just remove here a little bit of the duplication as always.
+
+And now we can set the port.
+
+Let's set the port to 80 here.
+
+The target port will also be 80.
+
+We're just going to leave this as it is as a cluster IP by not specifying any type here.
+
+Actually we can specify the type.
+
+Let's just specify here type cluster IP with a capital P here like so.
+
+And then the selector is just going to be the name here.
+
+Let's see we have name.
+
+So let's change the name here to app instead of name.
+
+And we're just going to use here your app caller API?
+
+And let's also set the name here.
+
+And we do need to also set the namespace at this resource level.
+
+Right.
+
+So if we do not specify the namespace under metadata here, this will be created in the default namespace.
+
+So let's just add here namespace dev and then the caller API service like so.
+
+So I'm just going to add a service here.
+
+The name is correct labels.
+
+Here we can also add these labels to our service.
+
+And we have the specification selector is going to be App Caller API.
+
+That's going to match the label here and the ports as defined here.
+
+In addition to that I also want to create another pod here that's going to be our traffic generator
+
+dot YAML.
+
+I'm just going to copy the definition from this pod here.
+
+Let's copy this.
+
+Let's paste it here.
+
+And now let's not define that's not set the namespace to dev so that this gets deployed in the default
+
+namespace.
+
+So the name here I'm just going to say traffic generator app traffic Generator.
+
+And then we can also add this value here.
+
+So let's copy paste it here.
+
+And then we'll also paste it here.
+
+And we need to configure this with a couple of arguments that are two arguments.
+
+The first one is the endpoint we want to hit.
+
+And the second one is the interval the interval here we're just going to set let's say to one second
+
+instead of 0.5.
+
+And now here for the endpoint that we wish to hit we cannot just use the name of the service.
+
+The name of the service is a valid identifier for DNS resolution and for communication if and only if
+
+the traffic is coming from within the same namespace.
+
+If we are communicating with A or from a different namespace, then we need to use what's called a fully
+
+qualified domain name, and that is composed of the following pieces of information.
+
+So I'm just going to write it here.
+
+That's going to be the service name dot.
+
+The namespace dot svc dot cluster dot local.
+
+And so it's a little bit longer than just using the service name.
+
+So all we have to do here now is to add this piece of information here.
+
+And the namespace is going to be dev instead of whatever value we had there.
+
+And this is all we need to set here for the communication to take place between our traffic generator
+
+and the caller API pod, or actually the caller API service, which then will redirect the traffic to
+
+the caller API pod.
+
+Great.
+
+Let's save this here.
+
+And let's now come back to the terminal and apply the entire directory and see if the logs from our
+
+traffic generator will be correctly showing the message.
+
+And actually here there are a few two things.
+
+Just one second before we go.
+
+There are two things here.
+
+The first one is we need to use version 1.0.0 for the traffic generator.
+
+And here we would like to hit the forward slash API endpoint of our pods.
+
+So let's just add forward slash API here so that we get the proper parsed message here in text format.
+
+Great.
+
+Let's save this.
+
+Come back here to the IDE.
+
+Let's then apply this directory here.
+
+The entire directory.
+
+And as you can see here, if you try to apply everything, Kubernetes is not going to be smart enough
+
+to identify the dependency.
+
+It's basically saying that hey the namespace dev doesn't exist yet.
+
+So if we were to just wait a few minutes or actually just a few milliseconds here and we just get the
+
+namespace, make sure that the dev namespace is here.
+
+And now we apply this once again, we can confirm that our pods and services will be created.
+
+So for that, if there is some dependency here, you might have to apply specific files beforehand.
+
+But everything should be looking good.
+
+So let's now get our pods.
+
+The traffic generator is the only one that's running in our default namespace.
+
+We can then get pod and service at the namespace dev, so we can confirm that we get both the pod and
+
+the service here up and running.
+
+We can also get multiple resources or multiple object types here.
+
+As you can see, this might be useful whenever you are debugging something that involves more than one
+
+type of resource, or more than one type of object.
+
+Let's now just get the logs of our traffic generator here.
+
+And the moment we do that, as you can see, perfect.
+
+We get the log.
+
+So as you can see here, first we didn't get any logs because the traffic generator was created.
+
+The traffic generator pod was created.
+
+But we had that error with the color API pod and with the service.
+
+And then after we fix that and created it, then we start getting the logs here.
+
+So that's the only thing I wanted to show you.
+
+We can also delete everything here from our directory.
+
+So that's going to just delete everything.
+
+And just keep in mind that whenever you want to reach out to a service that is exposed in a different
+
+namespace, then you would have to use its fully qualified domain name to reach to that service, instead
+
+of just using the individual service name.
+
+Perfect.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Whenever we want to make sure that our pods and whatever objects we're creating with Kubernetes have
+
+enough resources available for them to run smoothly.
+
+Resource quotas, requests and limits.
+
+They allow us to define how much CPU, memory, and storage the objects might use.
+
+Now these are basically two sides of the same coins.
+
+They are used to ensure that our resources are distributed fairly among applications, and they can
+
+also prevent a single application or namespace from consuming excessive resources from the nodes, and
+
+potentially leading to resource starvation and then pods being killed or slowed down.
+
+So there are two sides of the same coin.
+
+Basically resource quotas.
+
+They are policies applied at the namespace level, and they define hard limits on the number of resources
+
+such as CPU, memory and object counts.
+
+Here, for example, pods that can be consumed by all objects within that namespace.
+
+On the flip side of that, whenever we want to run a pod, for example, inside a namespace that has
+
+a resource quota set, we then need to define requests and limits for the resources consumed by that
+
+pod.
+
+They are defined at the container level within the pods.
+
+So if we have multiple containers within a same pod, we would need to define requests and limits on
+
+a container basis.
+
+And they specify how much of each resource a container needs requests.
+
+They focus on the minimum amount of CPU or memory a container should always have available after scheduling
+
+and the limits.
+
+They specify the maximum amount of CPU or memory that a container is allowed to use.
+
+A resource quota definition looks something like this.
+
+So let's say we have two namespaces.
+
+One is the dev namespace and the other one is the prod namespace.
+
+And then we'll create a resource quota object per namespace.
+
+We can define a name for the resource quota, and we can bind this resource quota to a specific namespace.
+
+We can then specify here in the spec session, how much are the hard limits for the requests CPU and
+
+requests memory and limits CPU and limits memory.
+
+These are just examples that are also other configuration options, and you can set these limits for
+
+other settings as well.
+
+On the right side here we have one example of how we could set the prod resource quota.
+
+For example, to make sure that the prod namespace has six times more resources available than the dev
+
+namespace.
+
+This would ensure that whatever pods or objects are running inside of our prod namespace, they would
+
+have all these resources available to them.
+
+And if pods within the dev namespace start to consume too much, this would not impact the prod namespace.
+
+Let's then have a look at how the scheduling would happen here.
+
+So let's say that we have a pod which we wish to deploy on the dev namespace.
+
+We look at the request CPU memory limits as well, and we can see that since there are no pods scheduled,
+
+well, we do have 500 millis here of CPU available.
+
+Here we are specifying with the extension M here.
+
+So notice the extension M and that's basically the smallest unit.
+
+It stands for millicores here.
+
+And we could also use fractional or decimal values if we were not specifying the m suffix here.
+
+But I do find it good to specify m, especially if you are using less than one vcpu if you're also using
+
+one or more, as long as it doesn't get really confusing.
+
+If you start using 100 vcpu, then it might be hard to visualize using M here.
+
+However, for our use case here, I just want to show you that this is possible.
+
+So 500 millis are available here.
+
+We have 1000 available.
+
+That's the first pod one GB byte of memory request is also available.
+
+We have two here, and then we also have available 1000 minutes for the limits and two GB bytes for
+
+memory.
+
+So it's all good.
+
+This pod gets scheduled and starts running and then we move to the next one also in the namespace dev.
+
+But now let's say we just want 200,000,512 maybe bytes 400ml of limits and one GB byte.
+
+This is all good.
+
+So if we add up these two lines here, we'll get 700ml.
+
+This is still under the 1000 of requests.
+
+We would get 1.5 GB bytes here.
+
+That's also below the two GB bytes.
+
+And the same thing for the limits for both CPU and memory.
+
+Now let's say that a third pod comes, and this pod actually would like a 400ml of request vcpu.
+
+However, whenever we add all these three values here, we would go over the request CPU quota that
+
+we have specified in our resource quota.
+
+As a consequence, this pod does not get scheduled in this namespace.
+
+It will be shown in a state of pending.
+
+Same thing if we go over limits.
+
+So let's say here we have three GB bytes already reserved for these two pods, and our limit for memory
+
+is four GB bytes.
+
+If a new byte comes here that wishes to use two GB bytes, or wishes to set two GB bytes for limits
+
+here, then this is not going to be allowed and the pod once again will not be successfully scheduled.
+
+It's important to highlight that if the resource quotas are set for namespaces, then pods must specify
+
+requests and limits, otherwise Kubernetes might not work correctly.
+
+All right, there is a little bit of math involved here, but it's nothing really fancy.
+
+It's just making sure that there are enough resources in our namespaces, as defined by the resource
+
+quota, so that the pods can be scheduled and run successfully.
+
+Also, of course, the estimates here, they must or they should.
+
+Let's not say must, but they should be done based on some real data.
+
+Maybe you do a little bit of stress testing and some expectations around the load, how much load your
+
+pod is expected to handle, how many requests and maybe how much work it's supposed to do.
+
+And then based on that, and based on some synthetic traffic, you could then monitor how much CPU and
+
+memory is necessary, and then you add a little bit of buffer just in case.
+
+And you could come up with these values, some approximations.
+
+So this doesn't need to be an exact very exact science here.
+
+But the recommendation is also not that you set these things blindly because this might actually impact
+
+other pods.
+
+Right.
+
+So if we start setting values here that end up being too high, if we have many pods running, then
+
+we might be reserving resources that we don't actually need, and then we will end up hitting resource
+
+quota bounds here.
+
+And new pods will not be able to be scheduled.
+
+Awesome.
+
+
+Let's now discuss resource quotas.
+
+I'm starting once again in an empty directory here, just so that we keep all the files separated.
+
+Let's create a couple of namespaces to begin with.
+
+So we're going to start with dev namespace here.
+
+Very similar to what we already did in the previous lecture.
+
+If you wish to copy let me just close this.
+
+If you wish to copy the file from the previous lecture, that's also perfectly fine.
+
+Or even if you wish to continue working on the previous directory.
+
+I think that's also perfectly fine.
+
+You might just have to be a little bit careful about the the pods and other things that we have there,
+
+but the files here are going to be very similar.
+
+So let's create one dev and one prod namespace.
+
+And here we are just going to use the API version.
+
+That's V1 kind is going to be namespace.
+
+So nothing really new here.
+
+Metadata here.
+
+Just going to have the name and the name in this one it's going to be prod.
+
+So I'm in the prod file.
+
+Just make sure that you are in the correct file here.
+
+Let's use the same names.
+
+And now let's create a resource quota.
+
+So we could create a new file here for resource quota.
+
+But I do find that this is one of those cases where having multiple resources in the same file actually
+
+makes sense, because I would always like to create a namespace with resource quotas.
+
+There is hardly ever a case where I would like to create a namespace without resource quotas, and then
+
+it would just basically be two files here instead of one.
+
+So I'm just going to have everything in one file here.
+
+The API version for resource resource quotas is also v1 and the kind here.
+
+So let's add kind.
+
+That's resource quota.
+
+And then we have here a metadata and some metadata here.
+
+Now we need to specify the namespace.
+
+So namespace will be dev.
+
+And the name here we can say dev dash quota like so.
+
+And we can set the specifications here.
+
+Let's set spec hard limits.
+
+And what we would like to set here is let's just set requests dot CPU and that's going to be set to
+
+one.
+
+This is the equivalent of a thousand milli cores right.
+
+So a thousand milli like so if you are using very small decimal numbers like 0.02 for example, then
+
+it might be easier to visualize if you have 20 milli like so if you are using two big numbers.
+
+So for example 100 and then you have here 100,000 milli, that is not as easy to see, right.
+
+It just at once here.
+
+It might might be confused with 10,000 or with a million.
+
+So depending on the unit here you can decide which one makes it more readable.
+
+I'm just going to go with the normal or with the with the integer.
+
+Here we can also set request.
+
+So let's set requests here request dot memory.
+
+And for the memory we're just going to use let's say one GB byte.
+
+We then would have limits dot CPU and limits dot CPU.
+
+We're going to set, let's say to two and then limits dot memory.
+
+We will also set to two GB bytes.
+
+Now it's important to highlight that these are not the only types of quotas that we can set.
+
+We have other things like we could set a maximum number of pods.
+
+For example, let's say I don't want to run more than four pods on this namespace, but I hardly ever
+
+find this is actually a good type of limit, because we can still have pods that are consuming a lot
+
+of resources, or we might end up actually needing more pods here, even though there are.
+
+Or maybe we can hit this limit even though there are still resources available.
+
+So I normally tend to focus primarily on the resources here and not on hard numbers for pods, services
+
+and so on and so forth.
+
+So let's also copy this and let's create a resource quota here for pod for prod.
+
+Sorry, not for pod for prod.
+
+And the difference is that it's going to be prod and that's going to be the prod quota.
+
+And here we're going to create in the request CPU.
+
+That's going to be twice as much.
+
+And it's also going to be twice as much.
+
+And for the limited CPU that's also going to be twice and twice.
+
+So that's looking good.
+
+We can also confirm that this is actually so the sum here limits the memory and the limits dot memory
+
+here.
+
+That's six GB bytes.
+
+That is less than what is allocated by default by minikube.
+
+Whenever we create our cluster we can go above the limit okay.
+
+So like just just to make it very clear, these are nothing but requests and like theoretical values,
+
+if we request more CPU and more memory than what is actually available in our cluster, then there will
+
+be a problem whenever the pods actually want to use those resources.
+
+But Kubernetes is not going to stop us from setting requests that are above our actual physical resources.
+
+And the example here is that we have limits CPU set to two for our dev namespace, and limits CPU set
+
+to four for our prod namespace.
+
+That means that in total we could theoretically reach a limit of six CPUs.
+
+However, by default, minikube uses or creates a node with two vCPUs.
+
+That means that if the containers if all the pods were to use all the resources that they theoretically
+
+can, then we would actually run into resource contention.
+
+So this is something else that you should keep in mind.
+
+This also refers to how much hardware is available to you.
+
+In our case here I'm just making you aware.
+
+But again, like setting very small limits here, that would also be something that you wouldn't come
+
+across in reality.
+
+So I'm just using the values here that we can better visualize.
+
+We will also use primarily the dev namespace since all these resources here, they are covered by the
+
+hardware quote unquote like virtual hardware that is provisioned by minikube.
+
+So let's save this.
+
+Let's come to the terminal.
+
+And in the terminal we can now run kubectl apply for the current files here.
+
+And we can now confirm that we have our namespaces.
+
+And if we were to now get our resource quota.
+
+Now if we pass it like so we are not going to get anything here.
+
+For the default namespace we don't have anything.
+
+But if we actually retrieve this for all the namespaces, then we can confirm that we actually get the
+
+values here.
+
+We can also describe this.
+
+We can say kubectl describe resource quota and then pass the name here.
+
+And we need to pass the namespace.
+
+Once again that's dev.
+
+We will also get a more or a clearer comparison here about how much is used and what is the hard limit
+
+that we set.
+
+All right I want to start creating the pods here with some resource requests and limits.
+
+But before that, let's take a short break.
+
+I think that we have discussed quite a few important things here.
+
+
+Let's now start creating here our pods to consume some of this quota in our dev namespace.
+
+So let's come back to the IDE.
+
+And within the same folder let's just create a new file here called API pod like so dot YAML.
+
+And we're going to create that's going to be API version.
+
+That's getting a little bit repetitive.
+
+But don't worry about it.
+
+It's just because we're creating lots of new resources.
+
+That's going to be our pod color API here.
+
+Let's just use all the same things here.
+
+The label we're going to use app instead of name.
+
+And the container here.
+
+Now we're going to set LM Academy forward slash color dash API 1.1.0.
+
+We're just going to advertise here port 80 like so.
+
+As you can see here this already comes prefilled.
+
+So in the resources section let me just erase this here.
+
+So in the resources section we can set here a requests as well as limits.
+
+Right.
+
+So we also have we can set it like so CPU so CPU.
+
+Make sure the indentation here is correct.
+
+So the CPU here we have and then we also have memory.
+
+And then we have here for limits CPU and memory like so.
+
+So let's say that for request here we would like 200 so 200 milli cores.
+
+And for memory here I believe that let's say um 256MB.
+
+And then for limits you're going to put half a core.
+
+So 500 Millicores.
+
+And for memory I'm just going to put 512 Mebibytes.
+
+Right.
+
+So here let's save this.
+
+And let's now apply and confirm that this pod can actually be scheduled.
+
+It will come to a running state.
+
+But before we do that, let's not forget that we need to launch this in the dev namespace, right.
+
+So let's save this.
+
+Let's come back to the terminal and let's run kubectl apply dash f clear the console.
+
+Let's apply this here.
+
+The pod has been created.
+
+So kubectl get pod namespace dev.
+
+And we can confirm that the pod is up and running.
+
+If we were to describe here kubectl describe pod color API namespace dev.
+
+We get the description as well as the resources here that are set at the container level.
+
+Very important here.
+
+The resources once again are set at the container level.
+
+That means if we have more containers here, then all of them have to have the available resources so
+
+that the pod can successfully start.
+
+Great.
+
+Let's scroll down here.
+
+Let's clear the console.
+
+And now let's inspect what happens once.
+
+We want to create a pod that consumes more resources than what is available.
+
+So in our file here let's just copy and paste the color API pod.
+
+And now we're going to say some heavy API pod like so.
+
+And then we're going to say heavy API instead of color API.
+
+We're just going to copy this find and replace here by heavy API.
+
+Let's replace all of them except for the image.
+
+We're just going to use the color API once again.
+
+So here the image itself is independent of the resource requests and limits.
+
+That means we can use a very lightweight image here.
+
+And we can still blow up all the requests and limits here if we wish to do so.
+
+So if we just put if we were to just put one here in our CPU and let's say that we want to request one
+
+GB byte and the limits would be two and that'll be two GB bytes.
+
+And we want to try to schedule this pod because the sum of CPU from the heavy pod and the color API
+
+pod and the color pod, they would exceed whatever we have here in our spec.
+
+Hard for the resource quota, then this pod here will not be allowed to be created.
+
+It will not run successfully.
+
+So let's save this.
+
+Let's come back to the terminal and let's run once again kubectl apply f like so.
+
+And as you can see here we get already the error.
+
+It simply says forbidden.
+
+So there was an error here.
+
+If we look at the message here we have that pod is forbidden because it exceeds the quota.
+
+The image here is also printed.
+
+Or the message here also includes how much is actually already used and how much I believe was requested.
+
+Yes, here.
+
+So it's not that easy to see.
+
+So requested, used and limited, right?
+
+It's printing how much we asked for, how much is already being used and what the limits are now.
+
+As you can see, this is an error from the server.
+
+So basically the request went to the server.
+
+Kubernetes tried to create and schedule the pod and then it got the error back from the server.
+
+So the server Kubernetes sent an error.
+
+And this is printed on the CLI.
+
+So this is not something that comes from the client side.
+
+It's a server side error.
+
+All right so before we proceed here let's just make sure that we delete everything that we have created
+
+so that we delete all the pods.
+
+We also get an error here because the pod actually doesn't exist.
+
+It was never created.
+
+Let's then come back to the IDE and just delete this heavy API pod back in the IDE.
+
+Let's just delete this file here so that we don't have this faulty pod up and running or being created
+
+whenever we apply the entire directory.
+
+That's a great moment for us to take a short break.
+
+And let's come back to the next lecture to also discuss one very common scenario that we might end up
+
+exhausting the resources of our namespace and how we could go about it.
+
+
+In this lecture, I would like to discuss one common trap that we might run into that might and might
+
+exhaust the resources and that you should be aware of.
+
+So here we are deploying only pods, right.
+
+That's a single pod here.
+
+However let's change this.
+
+Let's now create a color API deployment.
+
+So instead of just a single pod I wish to create a deployment here I'm going to copy the definition
+
+of the pod because I will specify this also under the spec section.
+
+But let's change this to APS forward slash v1.
+
+The kind will be deployment.
+
+The metadata here name is going to be color API deployment.
+
+The namespace will be dev the labels.
+
+Your app is going to be color API the spec we're going to have replicas.
+
+We're just going to create here.
+
+Let's set a number five for example.
+
+And then here we will have template.
+
+And the template will then have its metadata.
+
+Metadata.
+
+And I'm just going to copy here once again from our pod.
+
+We don't need to specify the metadata or the namespace under the template metadata.
+
+Right.
+
+So this will already be defined here by the the namespace of the deployment.
+
+We also don't need to specify the name that's going to be set by the deployment.
+
+And then we have here spec.
+
+And then we're going to set the containers here like so.
+
+Now instead of using the 1.1.0 let's just use the 1.0.0 here so that we can also try to create a rollout
+
+for this deployment.
+
+Last but not least, after we have created a template, we also need to set a selector here.
+
+And the selector we're just going to look at app color API like so right.
+
+So I believe that this is all we need to do.
+
+And let's reduce here a little bit the requests.
+
+Let's put this.
+
+So 200 is good here 256 might be a little bit too much.
+
+So maybe we can actually instead of reducing this here.
+
+Let's just change this replicas to four instead of five, so that we make sure here that our resources
+
+are within the boundaries of the dev namespace.
+
+And why do I say that?
+
+Because when we look at dev we should have one CPU, one GB byte, two CPUs, and two GB bytes for limits.
+
+When we look at the deployment, that's one thing we need to keep in mind.
+
+We're going to create four pods.
+
+Each pod will create its own requests and limits here.
+
+That means we should take these values and multiply by four.
+
+It's going to be 800 millicores that's going to be one GB byte.
+
+That's going to be two cores, and that's going to be two GB bytes.
+
+All right.
+
+So the default strategy here for a rollout is a rolling update.
+
+So we're going to leave that as it is.
+
+Let's save this here.
+
+Let's come back to the terminal.
+
+And now in the terminal here we will apply individual files.
+
+So I'm going to say apply.
+
+And we're going to apply the dev namespace and the caller API Deployment.
+
+All right.
+
+So we're just going to create these two.
+
+We don't need to create the prod nor the color API pod.
+
+Let's first create the namespace.
+
+And then now we're going to create the deployment color API deployment.
+
+And I'm sorry I think I confused that with a little bit with services.
+
+Let's come back to the IDE.
+
+And under selector here we're going to use match match labels.
+
+So match labels and then App Color API.
+
+Right.
+
+So I believe that this is looking better.
+
+Let's now come back to the terminal.
+
+Let's try to apply this once again.
+
+Perfect.
+
+We can confirm that this was created.
+
+Let's get the pods in the namespace dev here.
+
+And we can confirm that all the pods are now up and running.
+
+Perfect.
+
+If we were to now describe let's describe our resource quota.
+
+It's going to be dev quota with a namespace dev.
+
+Here we will see that it's virtually all consumed.
+
+It's virtually all booked up.
+
+So now what actually is going to happen once we come back to our IDE and we want to roll out a new version
+
+of our deployment.
+
+Let's come back to the IDE here, and let's change the image to version 1.1.0.
+
+Let's save this here, and let's come back to the terminal.
+
+And let's try to apply the the color API deployment file once again.
+
+And the moment we do that let's have a look at our pods.
+
+Kubectl get pod oops.
+
+We need to pass the namespace dev here.
+
+And as you can see here we have three pods.
+
+That doesn't seem right.
+
+Right.
+
+So let's wait a little bit.
+
+And as you can see here, this seems to actually be stuck at three pods.
+
+And I already expected an error here because the rolling update how it actually does the update is that
+
+it creates additional pods.
+
+But these additional pods cannot really be scheduled because they will be exceeding the resource quota
+
+of our namespace.
+
+So let's have a look at the Rollout status for the deployment, and that's going to be color API deployment
+
+in the namespace dev.
+
+And the moment we do we do this here, we see that there is still some errors.
+
+There are some errors here.
+
+One out of four new replicas have been updated, so only one replica has been updated here.
+
+Let's cancel this.
+
+And now let's try to describe here our deployment color API deployment namespace dev like so.
+
+And as you can see here, it's still giving us not giving us a lot of information.
+
+So let's see if we can scroll this up a little bit see if we get any errors here.
+
+No there is no or there are no errors here.
+
+But it's showing two unavailable replicas here.
+
+So let's see if we can get the replica set.
+
+So kubectl get replica set in namespace dev.
+
+And the new replica set that we have here.
+
+As you can see, this has a desired count of three, but only one is available.
+
+So let's try to describe this replica set.
+
+Kubectl describe replica set.
+
+We're going to pass the name here.
+
+And the namespace is dev and bingo.
+
+We start getting some very interesting messages here.
+
+And as you can see this is actually what is interesting for us.
+
+So the message is coming.
+
+The bug not the bug, but the error here is clearly visible at the replica set level, because the replica
+
+set level is the one that is responsible for creating new pods.
+
+So the error here is saying that once again we get this forbidden exceeded quota.
+
+And that's because we are trying to create more pods than we actually can based on how much available,
+
+how much resources we have in our dev namespace resource quota.
+
+So this is something that is very easy to oversee and sometimes hard to calculate, because you might
+
+have different teams or different applications being deployed in the same namespace.
+
+And it's not always clear how much of the quota itself is being consumed.
+
+And then suddenly you just want to update a deployment and you're very close to hitting the quota,
+
+and then you're not able to complete that rollout because the quota has been exceeded.
+
+So one way to go about that a couple of ways.
+
+One way to go about it would be for sure to delete like delete a new or resources that are not being
+
+used in the cluster so that you can free up some of the quota.
+
+You could also rightsize them to make sure that they are their requests, and their limits are matching
+
+a little bit more closely their their real resource needs.
+
+And a quick way here, if you do have some hardware available, it would be to directly edit the the
+
+resource quota for the namespace.
+
+So back in the IDE here, let's change.
+
+Let's update this a little bit.
+
+Let's put two two.
+
+Let's put four and four.
+
+We're going to save this here.
+
+Let's come back to the terminal.
+
+Let's apply.
+
+So kubectl apply our dev namespace file.
+
+The quota has been updated here.
+
+And now let's have a look at whether we started doing this here.
+
+Not yet.
+
+So now we can probably have a look at our rollout status here for deployment color API deployment namespace
+
+dev.
+
+And the rollout now is waiting to finish here.
+
+So if we don't want to wait for this thing here to for the exponential backoff to actually come and
+
+try to create new pods in the replica set, because that might take a little bit of time.
+
+We can also restart the rollout like so that's going to restart the rollout.
+
+And now we can see that once we check the rollout here, then we can confirm that the deployment has
+
+successfully rolled out.
+
+So now kubectl get pods sorry namespace dev.
+
+Here we're going to confirm that we have four pods.
+
+That is looking good.
+
+And these pods they are all very new right.
+
+So we can also have a look here at the replica set on namespace dev.
+
+And we can confirm here that the older replica sets, they are now with zero desired.
+
+And we have this new replica set here.
+
+If we were to now describe this replica set, describe replica set.
+
+Let's pass the name here namespace dev.
+
+Then we can confirm that the pods were successfully created.
+
+Once the rollout has succeeded, you can then decide whether you will leave the new resource quota in
+
+place to allow for this room for new pods to be created as part of new rollouts in our deployments.
+
+Or you can also revert the values to their previous amounts, and then make sure that you update the
+
+requests and limits of existing pods, or that you delete resources which are either consuming too much
+
+or not being used in the cluster at all.
+
+And just as a side note, of course this will also impact the the scaling, right?
+
+So if we were to scale this deployment color API deployment namespace dev replicas at ten.
+
+Then, of course, that's not going to work because we don't have enough resources to create ten replicas.
+
+So if we were to now get the pods here, then we're going to confirm that we're just going to have here
+
+three, six, eight pods.
+
+And that's as much as we can get.
+
+The rest here is not going to work.
+
+Right.
+
+So we would then once again try to scale this back to the original one here.
+
+Four.
+
+And then that should also kill some of the pods.
+
+And we should be good to go.
+
+So just keep these resource quotas, requests and limits in mind whenever you're playing around with
+
+pods, with deployments, rolling updates and so on and so forth.
+
+All right.
+
+So let's just delete everything that we have here.
+
+So let's just do a little bit of cleanup.
+
+We're going to delete everything.
+
+There are a few things which will not be found.
+
+That is perfectly fine for us.
+
+If we now get our namespaces we can confirm that the dev namespace is gone.
+
+So we are good to go.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Let's now discuss liveness readiness and startup probes.
+
+They can be very useful for making sure that our containers are in a healthy state before they start
+
+either serving requests or executing their tasks.
+
+Great.
+
+So probes are periodic health checks performed by Kubernetes.
+
+So Kubernetes takes care of these probes by itself.
+
+We don't need to implement any kind of program or script that would have to run on a loop.
+
+For example, this is all managed by Kubernetes and it is used to determine the status of a container.
+
+So they allow Kubernetes to manage the lifecycle of containers by checking if they're healthy and also
+
+ready to serve traffic.
+
+A very bad thing that can happen here is let's say that the container is up and running, but it's not
+
+yet ready to serve traffic, so some of the requests that could be forwarded to this pod would end up
+
+taking a long time to resolve, while the pod actually still is probably spinning up something that
+
+needs to serve the request.
+
+Right.
+
+So it's always good to make sure that the pods are able to serve requests.
+
+And this is where for example, the readiness probe comes in.
+
+So let's go through all of them in detail.
+
+The startup probe it ensures that a container has started successfully.
+
+So if the startup probe fails, Kubernetes will kill the container and it will try to restart it.
+
+For liveness probes they are continuously running.
+
+So they keep executing throughout the container life cycle.
+
+As long as the container is up.
+
+This liveness probes here, they will be executed and they check if the container is still running.
+
+If the liveness probe fails, then Kubernetes will restart the container.
+
+Now it's important to differentiate here.
+
+This does not mean that the container has.
+
+So if the liveness probe fails, doesn't mean that the container has completely stopped from the outside.
+
+The container might still be running from the perspective of the pod, for example.
+
+But if the liveness probe fails, this would indicate some kind of deadlock or some situation where
+
+the container is stuck.
+
+But it's still up, but it's stuck somewhere.
+
+And then Kubernetes would say, okay, let's restart this container here so that it might get a chance
+
+to get out of this deadlock situation.
+
+The last type, the readiness probe here checks if the container is ready to accept traffic.
+
+This is very important.
+
+As already mentioned, if the container is not ready to accept traffic it might so requests might hang
+
+or we might get error codes.
+
+So server side error codes.
+
+So if the readiness probe fails all that happens is that the container will be removed from the list
+
+of endpoints that receive traffic.
+
+So services will not forward traffic to containers if they are.
+
+Readiness probe fails the readiness probe similar to the liveness probe it keeps executing throughout
+
+the container life cycle.
+
+So let's have a closer look at a few diagrams.
+
+Here is an example of a startup probe.
+
+So the container has been created.
+
+Then we go to the next stage and we see is there a startup probe.
+
+If there is no startup probe then Kubernetes will just proceed with the liveness and readiness probes
+
+assuming that they are defined.
+
+But if there is a startup probe, Kubernetes will execute this probe and then it's going to check has
+
+the probe passed?
+
+If the probe passed, then Kubernetes will proceed again with the liveness and readiness probes and
+
+with the entire container initialization.
+
+If, however, the thread's the probe here fails, then we can specify a failure threshold here.
+
+And it's basically a number of times that the probe can fail before Kubernetes takes further action.
+
+So if the threshold has not been exceeded, we can also specify a small delay for the probe to be executed
+
+again, and we will stay in this loop here until either the probe passes or the fail threshold is exceeded.
+
+When this is the case, then Kubernetes will restart the container for the liveness probe.
+
+Then container is running here and we will directly jump into executing the probe as long as it is defined,
+
+right.
+
+So if the liveness probe is defined, it will be continuously executed.
+
+The process is exactly the same.
+
+If the probe passes, then we can specify a small delay here in interval that Kubernetes will keep in
+
+mind when executing the probe so that it doesn't execute too often, right?
+
+So if it passes, then it's going to be a small delay.
+
+It's going to execute the probe again.
+
+And as long as this loop here keeps or as long as the the container stays in this loop here, then it's
+
+all good.
+
+The problem happens if the probe here fails if the liveness probe fails, then we're going to enter
+
+into the failure threshold once again, and it's the exact same thing as before.
+
+If it has not passed, we have the delay here.
+
+The interval execute the probe.
+
+If the threshold has been exceeded, then the container will be restarted and the readiness probe very
+
+similar to the liveness probe.
+
+So it's the same stuff.
+
+Execute probe passes.
+
+Yes.
+
+Keeping this loop here we are all good.
+
+The container is receiving traffic.
+
+If the probe fails then we're going to check if the threshold is exceeded.
+
+If not, let's wait a little bit and execute the probe again.
+
+If it has exceeded, then the container will be removed from the endpoints that receive traffic from
+
+services.
+
+Awesome.
+
+So that's it for liveness readiness and startup probes.
+
+I'm pretty sure that you can leverage them in multiple scenarios during application development and
+
+deployment in Kubernetes.
+
+To make our lives a little bit easier when we explore startup, liveness, and readiness probes.
+
+In the practical exercises, let's quickly extend our color API with a couple of endpoints and a little
+
+bit of custom logic here, so that we can set via environment variables, whether we want these probes
+
+to actually fail or not, so that we don't really need to deploy or create here a different versions
+
+of the code, we can just control this behavior via environment variables.
+
+So let's set here fail underscore startup.
+
+And that's going to come from process.env dot fail underscore startup like so.
+
+And as long as this is set to true then we're going to fail the startup probe.
+
+Or actually maybe we could say this a little bit better here instead of fail.
+
+Let's just delay the startup here so that we can then set in the probe itself, the the certain interval
+
+between the probes and the maximum threshold.
+
+And then if the combination is less than the delay of the startup, then this would fail.
+
+So let's then also set this here delay start up like so.
+
+Good.
+
+Then we have here fail underscore liveness.
+
+So this is going to fail the liveness probe process dot env dot fail underscore liveness.
+
+And as long as this is equal to true then we're good.
+
+And then we have let's add a little bit more logic here.
+
+Fail readiness so that this fails half of the time.
+
+So we're just going to say process dot env dot fail underscore readiness.
+
+And if this is set to true.
+
+So if this is equal to true then what we will do here is we will return a number.
+
+So we're going to return actually a boolean.
+
+That's going to be true half of the time.
+
+And that's going to be false half of the time.
+
+So the math dot random function here will just return a random number between 0 and 1, which means
+
+half of the time it's going to be less than 0.5, and half of the time is going to be more.
+
+So if we set fail readiness to true, then our readiness or our container here has a 50% chance of failing
+
+the readiness probe.
+
+This means that if we have six pods with containers here, then three of them, or approximately three
+
+of them might be a little bit more, a little bit less, they will fail the readiness probe.
+
+Now, if this is true, then we have this expression here.
+
+Otherwise we're just going to set this entire thing to false.
+
+And we're not going to fail the readiness probe.
+
+We can also console.log these values if you wish to do so.
+
+So console log.
+
+And then let's just add here some some message.
+
+So we will say here delay startup.
+
+And then we will pass here the value of the variable.
+
+So delay startup.
+
+And we're going to do the same thing for the fail liveness fail liveness and fail readiness.
+
+And then we'll just pass here fail liveness like so and then fail readiness like so.
+
+All right that's good.
+
+This will give us a little bit of room here to customize the behavior of our pods based on environment
+
+variables, which might be more interesting, easier for us then, if we had to actually touch the code
+
+here and create different tags and different versions.
+
+It's not really that that developer friendly.
+
+So this is a little bit easier to work with.
+
+Let's now extend our endpoints and below the app dot get forward slash API.
+
+Here let's add two endpoints.
+
+We're going to add the app dot get forward slash ready.
+
+And then that's going to be once again a request response.
+
+And we will also add here the health endpoint.
+
+And the health endpoint will be the one we will use for the liveness probe.
+
+And the ready endpoint to be the one that we use for the readiness probe logic here.
+
+Very simple.
+
+If the fail underscore readiness is set to true, all we're going to do is return res dot send status
+
+and we'll simply return here a 503.
+
+That means service unavailable.
+
+Otherwise if this is not the case we'll just return rest dot send.
+
+And we're going to send the okay text, which will also be accompanied by a default code or default
+
+default status of 200.
+
+We can actually implement the same logic here.
+
+So now we're going to say instead of fail readiness that's going to be fail liveness like so.
+
+And this is already looking good.
+
+Now there is one other thing missing.
+
+And this is the delay startup.
+
+So let's just get the delay startup here.
+
+And all we're going to do is we're going to add a very basic a very basic synchronous delay here.
+
+So we will say let start is equal to or actually we can just use const here because we're not going
+
+to change the start date dot now.
+
+And then we will simply create a blocking loop here.
+
+Once again if you are familiar with JavaScript and in general programming in general, you will shout
+
+at me and say like, hey, please never block the event loop in JavaScript or never create such a loop
+
+here synchronously.
+
+But my intention is to actually block everything, right?
+
+So if the date not now is less or minus, the start here is less than 60,000.
+
+This stands for 60s or 60,000 milliseconds here.
+
+Then just do nothing and keep running this loop here until this condition exits.
+
+So this will delay the startup of our application by 60s.
+
+That means if we try to hit the health endpoint here, for example, then we would not be able to get
+
+a response from the health endpoint for 60s.
+
+Now once again, this is on purpose, right?
+
+So we'll even add a comment here.
+
+Purposefully, purposefully block event loop and execution for 60s.
+
+Right.
+
+And this is here to illustrate startup probes.
+
+It's very clear here.
+
+Whoever comes across this code doesn't get angry at me.
+
+That's good.
+
+So now we have everything we need.
+
+We have two endpoints that we can check the readiness and the liveness.
+
+And we also have a way to introduce a small delay in our application so that we can visualize what happens
+
+when the startup probe fails.
+
+Let's save this.
+
+And now we need to build our container.
+
+So back in the terminal, make sure that you are inside of the color API directory here.
+
+And let's go with Docker build.
+
+Let's pass the tag here LM Academy or whatever username you are using.
+
+And that is the color API.
+
+Now we are in version 1.1.0.
+
+So let's just bump this to 1.2.0.
+
+And that is going to be the build in the current directory.
+
+All right.
+
+That is looking good.
+
+We can now push this as well with Docker push LM Academy forward slash color API version 1.2.0.
+
+And that's pretty much everything we need to do.
+
+We can already use this new version of our color API in the upcoming lectures.
+
+Once again, there was no breaking change here.
+
+That's why I'm bumping the minor version, because all the defaults of our failed probes and everything,
+
+they are set to false, right?
+
+If anything was set to true and there was a breaking change, then I would have bumped the major version.
+
+But that's just an aside comment.
+
+That's great.
+
+Let's then wrap up this lecture.
+
+Let's take a short break and I'll see you in the next video.
+
+
+Let's now start discussing liveness readiness and start up probes.
+
+The name of the directory would be too long here, so I just put a summary.
+
+Health probes.
+
+Right.
+
+New directory.
+
+No files here.
+
+If you wish to reuse some pod files.
+
+That's also okay if you just want to speed up some stuff.
+
+But I would recommend that you just use the same images that we will be creating, or that we will be
+
+using in the following lectures.
+
+Let's create a new file here.
+
+That's just going to be our color API dot YAML pod.
+
+Let's quickly rename this.
+
+Let me close this here.
+
+Quickly rename this from color API to color API pod because we also want to have a deployment afterwards.
+
+So API version will be v1 and then kind will be pod.
+
+Once again let's just add the the autocomplete here.
+
+Color API pod or actually just color API will be good enough.
+
+Or maybe we add pod I don't know, let's just add the pod here.
+
+Good.
+
+Um, now let's set here our color API pod.
+
+We don't need to set the resources for now.
+
+The container here will be.
+
+We will advertise port 80 and the image will use LM Academy Forward slash color dash API version 1.2.0.
+
+So make sure that you're using the version 1.2.0 here, because this is the version that has the endpoints
+
+for the health probes, as well as the option to delay the startup for us to see what happens with the
+
+startup probe health probes.
+
+They are defined at the at the container level here.
+
+So we should define them in the list that is created here.
+
+Right.
+
+So now we're going to say that we will have a startup probe here startup probe.
+
+And the definition is fairly straightforward.
+
+So we can define a variety of different probes.
+
+They can be HTTP requests.
+
+They can be grcp requests.
+
+They can be some shell scripts or something that we want to execute inside of the container.
+
+For us here we will simply say http get.
+
+And this is going to issue a Get request to a specified path that we will define here.
+
+And the path that we will use is the health path.
+
+We can also set the port here and the port will be port 80 within the container.
+
+I am getting a little bit annoyed by these squiggly lines here, so let's just set the resources just
+
+so that the container here the IDE stops complaining.
+
+So resources.
+
+And then we will say here limits.
+
+And then we'll say then CPU.
+
+That's going to be I don't know, let's put 500 milli cause of CPU and memory.
+
+That's going to be let's put 512 maybe bytes just so that we have now or we start following here the
+
+conventions of always defining resources at the container level, since we already know how to do this.
+
+All right.
+
+So we have our startup probe defined here.
+
+We can also have liveness probe and readiness probe.
+
+But let's now focus on the startup probe like so.
+
+So here now our startup probe is going to successfully execute.
+
+We can make it a little bit faster in case we want to visualize the results a little bit faster.
+
+We can set both the failure threshold.
+
+That's going to specify how many times the startup probe can fail before the container gets restarted.
+
+I'm just going to set it to two here.
+
+And we can also set the period in seconds here between the probes.
+
+So let's just set this to three seconds.
+
+So after six seconds the container should fail.
+
+If the startup probe is is is unsuccessful then the container should be restarted.
+
+Let's save this here.
+
+Let's come to the terminal.
+
+And let's apply this pod and confirm that everything will go through successfully in the terminal.
+
+Make sure you are inside of health probes inside of the folder health probes.
+
+Let's just run kubectl apply with the file color API pod.
+
+And now we can have a look here get pod.
+
+And let's watch this so that we confirm that the pod will eventually change into a running state.
+
+Perfect.
+
+So after a few seconds here, the pod entered into a running state.
+
+And we have one of one ready containers.
+
+That's great.
+
+So we can confirm that the startup probe is successfully passing.
+
+Let's now see if we can break the startup probe by using our environment variables back in the IDE,
+
+we can set environment variables at the container level with the very straightforward setup here with
+
+env.
+
+And then we just need to pass the variable.
+
+The name of our variable is delay startup.
+
+And actually we should also add here.
+
+So this is a list of environment variables.
+
+So the name of the variable is delay startup and the value of the variable will simply be true, like
+
+so.
+
+So when the delay startup is set to true, then the startup of the or the entire startup of our http
+
+API will be delayed by 60s.
+
+That means this startup probe here should fail.
+
+So let's come back to the IDE and let's see if this is the case.
+
+Back in the IDE, we're going to delete the pod that we have.
+
+So kubectl delete and the file is going to be called API pod.
+
+And then we're going to create the pod once again.
+
+And we will now watch the kubectl get pod command.
+
+And as you can see here bingo.
+
+Now after roughly six seconds here our startup probe failed.
+
+And we start seeing our container getting restarted.
+
+So every six seconds here the container will be restarted.
+
+And then eventually we will enter into this crash loop.
+
+Back off here Because the container has been restarted for enough times so that Kubernetes enters into
+
+this crash loop.
+
+Back off error.
+
+So now if we have a look at the kubectl describe pod and we can pass the color API pod.
+
+Here we can have a look at what we actually get here as a message.
+
+And as you can see here at the bottom we are getting a warning.
+
+Unhealthy reason here.
+
+So the reason is unhealthy.
+
+And the startup probe has failed.
+
+So this whenever we try to get this endpoint here because the server is not up and running it's not
+
+listening.
+
+Then the connection is refused.
+
+And if we have a look at once again get pod and with the watch command, then we will have a look that
+
+the restart count here just keeps increasing and the container is actually never in a ready state.
+
+So if startup probes fail then they will lead to restart of the container and if too many restarts or
+
+if enough restarts happen, then we will enter into this crash loop.
+
+Back off here while this crash loop back off is basically doing is it's adding a little bit of delay
+
+before actually restarting the container and trying this again.
+
+Awesome.
+
+So we saw how we can leverage startup probes for container restarts to make sure that if the container
+
+is not successfully started, then we get a restart and we attempt to try things again.
+
+Let's quickly change here in our IDE.
+
+Let's set the delay startup to false.
+
+Now we're going to save this.
+
+Let's come back to the terminal.
+
+In the terminal let's delete our existing pod or not described.
+
+That should be delete.
+
+So kubectl delete the current pod.
+
+And I believe that's all we need to do.
+
+Let's just confirm we get no pods running here in the default namespace.
+
+That's great.
+
+Let's then take a short break and come back in the next lecture to continue exploring health probes.
+
+
+
+Before we explore liveness and readiness probes.
+
+I just observed that I introduced a small bug here.
+
+When I coded this, I just forgot to actually add an independent endpoint here that we can use for successful
+
+startup probes.
+
+But failed readiness or liveness probes.
+
+So if we fail a liveness probe here, I was thinking, okay, we can use the health endpoint for both
+
+startup and liveness probes.
+
+But if we want to fail, only the startup and or actually if we want to fail only the liveness here,
+
+then there is no way for us to do that.
+
+Because if the startup passes and uses this forward slash health here, then the the liveness here,
+
+it has to pass.
+
+Otherwise the startup will also fail.
+
+So let's just add a dedicated endpoint here for the startup.
+
+And we're going to add up here.
+
+And then this will just always return okay.
+
+Right.
+
+So it like so it's going to look a little bit better.
+
+So whenever we hit the up endpoint we just get the message okay here.
+
+And the startup probe will fail due to the delay.
+
+So let's save this now.
+
+And let's come back to the IDE to just build and push this image in the IDE.
+
+Let's now run Docker build and the tag here LM Academy forward slash color dash API.
+
+And then this is a bug fix.
+
+So that's going to be 1.2.1.
+
+And I'm going to use the current directory as the context.
+
+That's looking good.
+
+So now we're going to simply push this image with Docker push.
+
+And now we should pass the correct version here.
+
+And then once this is available we can continue with the next lecture.
+
+Perfect.
+
+Let's then take a short break and come back in the next lecture to now finally discuss liveness probes.
+
+
+Hello and welcome back.
+
+Sorry for the small hiccup here.
+
+Let's just fix now our startup probe to hit the up end point.
+
+And then we're going to have to use the version 1.2.1 here so that the up end point is available.
+
+And now independent from the liveness probe we can confirm that this is going to work as expected.
+
+Let's save this.
+
+Come to the terminal and let's then create our pod with cube CTL apply.
+
+Let's then create it here.
+
+And we can now have a look at the pod health.
+
+And we can wait a little bit.
+
+And then we will confirm that the container here is then considered to be in a ready state.
+
+That's great.
+
+Let's then delete our pod here and let's now implement our liveness probe.
+
+The liveness probe is very similar.
+
+Once again the probes they all have very similar configuration just really depends.
+
+Or what changes here is when they are played, as well as the consequences of or what happens when they
+
+fail.
+
+So the liveness probe here, we're not going to eat the up end point.
+
+We're going to hit the health endpoint.
+
+And let's now add here a failure threshold of maybe let's say 83 and then 10s between the probes.
+
+Let's save this here.
+
+And now we can add a new environment variable to control what's going to happen.
+
+So that's just going to be fail underscore liveness.
+
+And we're going to set the value to true.
+
+Let's then save this here.
+
+Let's now come to the terminal.
+
+And let's create this pod in the terminal.
+
+Let's clear the screen.
+
+Let's run kubectl apply once again.
+
+And now we can have a look here kubectl get pod.
+
+And let's watch what's going to happen.
+
+So as you can see the pod actually gets into a or the container gets into a ready state.
+
+It passes the startup probe.
+
+Now the liveness probe here is running behind the scenes and it's hitting the health endpoint.
+
+And this is failing.
+
+Now this would take roughly 30s for the container to be restarted.
+
+But as you can see, bingo.
+
+After 30s the container is restarted because the liveness probe failed and now the container goes into
+
+ready state and the liveness probe keeps executing here behind the scenes.
+
+And then roughly after another 30s, the container would be restarted once again.
+
+In our case here, this is once again a makeup example, right.
+
+So this is like a theoretical example.
+
+So that means if other applications were hitting other endpoints then it would work fine because we
+
+did not really implement any logic to completely shut down the application.
+
+But in real life and in real projects, then the liveness probe should really represent something that,
+
+hey, if it is failing, that means that the container is not alive, it's not healthy, and it should
+
+be restarted.
+
+All right.
+
+Great.
+
+So we saw here that the container was restarted three times during this discussion.
+
+We can stop this here.
+
+We can now delete the the pod.
+
+And basically then just to summarize, the behavior of liveness of failed liveness probes is very similar
+
+to failed startup probes.
+
+And it just basically leads to the container being restarted.
+
+Let's then take a short break and come back in the next lecture to discuss readiness probes.
+
+
+Let's now discuss readiness probes.
+
+And for that, let's just make sure that we set the fail liveness to false so that it doesn't fail here.
+
+But now we're actually going to work with deployments and services.
+
+Because I want to show you what happens when readiness probes fail.
+
+Let's create a new file called API deployment here dot YAML.
+
+We're just going to copy the the template here for from our pod.
+
+And we're going to paste it here.
+
+And now we're just going to use apps forward slash v1.
+
+The kind will be deployment.
+
+The name will be color API.
+
+And you can just say color API labels.
+
+Let's use app here color API.
+
+Now the spec requires a few things here.
+
+Let's just add templates so that we can put the container here under the correct indentation.
+
+That's looking better.
+
+And we also need to have a metadata with labels with app and then color API.
+
+And we also need a selector here.
+
+Selector match labels.
+
+And then that's going to be app color API like so.
+
+And then we're going to set a replicas number here.
+
+And we're going to have six replicas.
+
+All right.
+
+So now let's have a look here at our information.
+
+So the container is looking good.
+
+The name can be color API container or color API like so then we have the image ports is also looking
+
+good.
+
+Resource is looking good.
+
+The environment here we're going to set the the delay startup and the fail liveness to false both.
+
+So let's add a new one here.
+
+And we're going to call this fail readiness.
+
+And this one we're going to set to true.
+
+So we're going to leave both the startup and the liveness probes defined here.
+
+Now let's copy this and let's paste this here.
+
+And let's define our readiness probe.
+
+So readiness probe here.
+
+And then we're going to query or we're going to hit the ready endpoint Point.
+
+The failed threshold here will be let's add a little bit less.
+
+Let's say two.
+
+And then period seconds are going to be five here.
+
+That means that after roughly 10s a this this container here is not going to be considered healthy and
+
+it will not receive traffic.
+
+So let's leave this as it is and let's observe how this behaves.
+
+We also wish to create a service.
+
+We can create the service here on the same file if you wish to do so.
+
+So API version is going to be v1.
+
+The kind will be service.
+
+So kind service.
+
+And then we're going to have here a metadata color API svc.
+
+Let's just add this here or delete this here.
+
+And I believe that we're actually creating quite a few quite a few different objects here.
+
+I also want to use the traffic generator.
+
+So let's just create a folder here.
+
+And then we will say readiness probes like so that's just going to make things easier.
+
+Let's move the deployment in here.
+
+And let's also then create colour API, svc, dot YAML.
+
+And we'll also create the traffic traffic generator.
+
+Generator dot YAML like so.
+
+And let's just now take this information from here.
+
+Let's cut this information and let's save this file.
+
+Let's paste in the service.
+
+The port is going to be port 80.
+
+The target port will also be port 80.
+
+The selector app here is going to be color API.
+
+So we can just confirm that's exactly the same here that we have for the labels app color API.
+
+So that is looking good.
+
+And now here for the traffic generator I'm just going to copy this and paste it here.
+
+And I'm just going to change a few things.
+
+So it's going to be traffic generator.
+
+The label name here will be traffic generator.
+
+Can also use app here.
+
+And now the name of the container will be Traffic Generator and the image here will be traffic generator
+
+version 1.0.0.
+
+We don't need to advertise any ports.
+
+We don't need the environment variables.
+
+We don't need startup liveness probes.
+
+So I'm just going to remove this from here.
+
+And now we can set a couple of arguments right.
+
+So args once again the traffic generator takes two arguments.
+
+The first one will be the endpoint we want to hit.
+
+And that's just going to be the name of the service.
+
+And that's going to be the name of the service.
+
+I'm just going to copy it here.
+
+I'm going to paste it here.
+
+And we're going to hit default.
+
+Hit the forward slash API.
+
+And then the delay we're just going to use half a second 0.5 like so perfect.
+
+So just once again to recap what we did here.
+
+We in the color API we have created a new deployment with six replicas.
+
+And then we have set the fail readiness environment variable to true.
+
+Now remember from the implementation.
+
+That means that there is a 50% chance that the pod or the container will end up in a not ready state.
+
+That means for six replicas, approximately three might be a little bit less, a little bit more, depending
+
+on chance.
+
+Right?
+
+Um, but some of them should roughly, or some of them should eventually not serve requests.
+
+So we also set here the readiness probe to roughly fail after 10s.
+
+And we are hitting the forward slash ready endpoint.
+
+So let's save this here.
+
+Let's come back to the terminal.
+
+Let's confirm whether we have any pods up and running I don't if you do you are free to delete them
+
+or not.
+
+I mean that's up to you.
+
+And now let's just apply what is in the readiness probes directory.
+
+Oops, I think I forgot to add apps for the slash v1.
+
+So let's just come back here to the IDE and in our deployment just I think no that's correct here.
+
+What I messed up is that this should be spec here and then we should have the containers, right.
+
+So apologies for this.
+
+Just got a little bit mixed up.
+
+Let's save this and let's come back to the terminal and try it again in the terminal.
+
+Let's just delete everything that we have here.
+
+And that's going to be the readiness probes.
+
+And let's apply this once again.
+
+If you want to delete this with force it might be the case here.
+
+If you get this warning message just delete everything with the force and then we're good to go.
+
+Let's apply this once again.
+
+And I believe that now we're good to go.
+
+So let's get our pods.
+
+We can confirm that we have six seven pods and all the pods are up and running.
+
+And as you can see here we have one pod that is considered unhealthy.
+
+Right.
+
+So we can see here that there is zero out of one ready pods.
+
+And if we were to or ready containers here.
+
+And if we were to copy this and let's now describe so kubectl describe pod let's paste this here.
+
+We would then eventually find the message here that the readiness probe failed with a status code of
+
+503.
+
+So this is a pod that is considered unhealthy, right?
+
+So this this has failed.
+
+If we scroll here a little bit, I believe that's a little bit at the bottom.
+
+Yes, we will find the conditions here.
+
+And this conditions are interesting because they are saying that the pod is not ready and the containers
+
+are not ready.
+
+So now here, let's try once again, because I believe that only one is a little bit hard to see.
+
+So let's just delete everything here and let's see if we can recreate the the entire thing.
+
+So kubectl apply readiness probes.
+
+And let's see if now we get a few more containers here that are failing or a few more pods that are
+
+failing.
+
+All right.
+
+It seems I'm not very lucky because now it seems like all the pods are failing.
+
+So let me just describe here and let's have a look.
+
+Uh, yes.
+
+So this also failed, and it seems like none of the pods is actually working here.
+
+So what we can try is we can try to actually scale.
+
+Let's scale this deployment.
+
+And the deployment is the caller API deployment.
+
+And the number of replicas here will be zero.
+
+So we're just going to completely remove the replicas.
+
+When we get replicas when we get the pods there is nothing.
+
+And let's now scale back to six instead of deleting and recreating.
+
+And now hopefully perfect.
+
+So now finally got something a little bit better.
+
+So three of these pods are considered unhealthy and three are considered healthy.
+
+So much for 50% right.
+
+But again that's probability.
+
+Um, so now the traffic generator here, if we were to have a look at the logs of our traffic generator.
+
+Now this should actually be receiving responses only from the healthy pods.
+
+So as you can see here, let's just scroll up a little bit.
+
+We can actually maybe follow the logs here with dash F.
+
+And let's have a look that we are actually getting responses only from three different containers or
+
+from three different pods here.
+
+So let's env for x and bf.
+
+So as you can see here, if we keep looking up and down we're going to find only these three pods returning
+
+or only these three pods receiving traffic.
+
+And that's exactly what the role of a readiness probe is.
+
+It is to prevent sending traffic to pods which have containers that are not able to respond to this
+
+traffic.
+
+So if the containers are not passing the readiness probe, that's a great thing for us to avoid these
+
+containers.
+
+And then we should then go and see what's actually happening with them.
+
+But they will not receive traffic.
+
+And that's great for us.
+
+Let's now stop following here the the logs.
+
+And what I want to show you is what is actually done behind the scenes.
+
+We can describe our service.
+
+So let's describe the color API svc work here.
+
+And the moment we do that, you should see that in the end points here, the end point section.
+
+This is where we can visualize that we have only three pods receiving traffic.
+
+So there are only three pods here.
+
+And we could go and try to match here what we get.
+
+So let's see kubectl get pod.
+
+I believe we do not have the the IP here, but maybe with white we would get the IP.
+
+Yes.
+
+Perfect.
+
+So if we get the output here with the output white flag then we can get the IP.
+
+And we can confirm here that the four ex-bf.
+
+And the other one is the env here.
+
+So that's going to be 6768 and 63.
+
+And we can confirm that these are the ones that are actually registered here.
+
+This is another very strong use case to using services because they handle unhealthy pods.
+
+And they handle pods that are not ready to receive traffic in a very graceful manner.
+
+Right.
+
+So hopefully this also clarifies why you should always set up probes in your containers so that there
+
+is already an automatic remediation here, or there are some steps taken by Kubernetes to make sure
+
+that either the container is restarted and then hopefully the problems are solved, or if the container
+
+is really not ready, that it doesn't get any traffic and it doesn't impact your end users that are
+
+hitting a certain service, let's then just delete here everything.
+
+So kubectl delete force readiness probes.
+
+We're going to delete everything here.
+
+Let's just make sure that we have a clean slate at the end of this lecture.
+
+That's good.
+
+We have no resources in the default namespace I believe there are also no services here.
+
+Let's have a look.
+
+Yeah there is only the Kubernetes service.
+
+So that's good.
+
+This comes by default and we should not delete it.
+
+So I believe we are good to go to close this lecture.
+
+Let's take a short break and I'll see you in the next video.
+
+
