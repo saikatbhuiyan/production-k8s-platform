@@ -1,0 +1,4275 @@
+Hello and welcome back.
+
+Let's start our discussion around volumes and volumes here.
+
+They really bring a lot of the concepts of Docker in terms of persistence because as you already know,
+
+what we run in Kubernetes are containers.
+
+And containers by definition do not have persistent storage.
+
+Anytime we need to have persistent storage or we need to share data between containers, then we should
+
+think volumes.
+
+So let's start discussing it.
+
+Volumes are a directories basically from the perspective of the container.
+
+Right.
+
+So it's just going to be a directory possibly with some data in it.
+
+And they are accessible to containers in a pod.
+
+The Kubernetes website summarizes it better than I could.
+
+So basically from the container perspective, volumes are just directories.
+
+And we would work with directories in any way that we normally do.
+
+Now, what changes depending on which kind of volume we use is how that directory comes to be and the
+
+medium that backs it, and also the contents of that directory.
+
+So when we say here the medium that backs it, it means that there is a variety of way, variety of
+
+storage solutions that could be used to back the the volumes here.
+
+And you can think EBS or EFS and AWS, you can think of any kind of storage solution in GCP or Azure,
+
+or even a local SSD in a node or a host in Kubernetes.
+
+So there is a variety of ways that we can or a variety of back ends that we can use to actually store
+
+the data.
+
+And this is what will result in or this is what will lead to different types of volumes.
+
+So to use a volume we should specify the volumes in the pods spec dot volumes section here of the specification.
+
+And then we should declare where to mount these volumes into the containers in the dot spec Pack containers
+
+volume mounts.
+
+So we will specify under the pod definition file the volumes we are interested in.
+
+And then we're going to map these volumes that we have specified here to specific volume mounts in the
+
+containers.
+
+Naturally the volumes they should exist beforehand.
+
+Right.
+
+So we should create our persistent volumes and respective persistent volume claims beforehand before
+
+we can use them here.
+
+Or config maps should exist beforehand.
+
+So it's they should be there.
+
+We're going to explore how to create them in details in the upcoming lectures.
+
+And also when we talk about configuration management, the bottom line is as long as the volume is there,
+
+then all we need to do is to specify them in the volume section here of the pod, and then declaring
+
+where to mount these volumes into the containers.
+
+So let's have a look at a diagram to understand a little bit better.
+
+So let's say we have here a Kubernetes cluster.
+
+We have a certain node.
+
+And then within this node we have a pod.
+
+And in the volume section here.
+
+And we're going to just assume that this all exists right.
+
+So in the volume section here we're going to specify a couple of volumes.
+
+That's going to be pod temporary storage.
+
+So that's just going to be stored within the pod.
+
+That's called empty Dir volume.
+
+And this is going to have the same lifecycle as the pod.
+
+We can also specify a local directory in the node itself so that it's different or decoupled from the
+
+pod.
+
+It will be persistent persisted beyond the pods lifecycle.
+
+But once again if there is any issue with the node or if the pod, or if we end up scheduling our application
+
+in a different node, then that's not going to have the same data.
+
+We can also leverage configmaps from other parts of our Kubernetes cluster, and we can mount them as
+
+volumes within our containers.
+
+And that basically means take the configuration data here.
+
+That's very common to inject configuration into our application.
+
+And don't worry, we're going to work with Configmaps and Secrets in upcoming sections.
+
+But the bottom line is they just have a bunch of data that we can mount as a volume within our containers,
+
+and we can also use third party solutions, let's say elastic block storage here, or EFS from AWS for
+
+Elastic File System.
+
+And we can create volumes of persistent volumes backed by this medium here.
+
+And we can just mount them.
+
+We can inform like we can leverage them and use them within the pods as well.
+
+And then from the perspective of the container, once again, all we are going to do is we will inform
+
+the volume mounts.
+
+We're going to say what's the name of the volume.
+
+So this name here is going to match this name here.
+
+And this name here is going to match this name here.
+
+So this is one example of us leveraging EBS for example elastic block storage for storing let's say
+
+some database data.
+
+Right.
+
+And this here we could store something else.
+
+And as already mentioned, Kubernetes supports many other storage backends and we can create our own
+
+as well, as long as we want to really dig deeper into how to do that.
+
+And we can comply with the specification.
+
+So we should.
+
+If you really want to explore more about this, I would just say go and have a look at CSI drivers.
+
+So container storage interface.
+
+And that would start pointing you in the direction of how you can actually create your own driver to
+
+support your own custom storage solution.
+
+Just before we wrap up, I just want to zoom in a little bit more into some common, different types
+
+of volumes that we work with.
+
+The empty volume type here is used for ephemeral storage within the pod, for some scratch data, or
+
+some files that are temporary but must be or should be, for example, shared between containers, and
+
+they follow the lifecycle of the pod.
+
+So when the pod is terminated, the contents of this volume here.
+
+They're also deleted the local volume here.
+
+It kind of supersedes what is very well known as the host path.
+
+This is also some common type of volume that you might see, especially in older code bases.
+
+It does introduce security vulnerabilities or it might let's say may introduce right.
+
+And it is currently discouraged.
+
+And the alternative the recommended alternative is local.
+
+So what local does is it creates a durable storage within a specific node.
+
+This here is considered a persistent volume.
+
+That means we need to have a persistent volume definition.
+
+And we also need to have a persistent volume claim.
+
+We're going to see how to do that a little bit later on in the course.
+
+It does also require setting node affinity here.
+
+And that's important because this is a local directory inside of a specific node.
+
+That means when pods wish to use this volume, it does make sense that they have to follow some rules
+
+to be mounted in the correct node, so this is preferred over host path.
+
+We then also have persistent volume here.
+
+That's a little bit more general.
+
+It does include local as well.
+
+But I put here separate because this can be backed by multiple technologies.
+
+Cloud storage here.
+
+And very interestingly it can be statically or dynamically provisioned.
+
+We're going to explore that a little bit later on see what it means.
+
+But bottom line is that statically we need to create the persistent volume before we can create a claim
+
+to use it.
+
+Dynamically provisioned is a little bit different.
+
+We will create the claim to use it, and then the persistent volume will be created to match that claim.
+
+We then also have two other very common volume types the config maps.
+
+They are used to inject configuration data into pods, and they allow us to not have to.
+
+To hard code the data into the Pod definition.
+
+That can be very useful for managing configuration and the secret volume type as well.
+
+The secrets can be used to inject sensitive data into pods, without having to hard code them into the
+
+pod definition.
+
+Of course, here we would never want to hard code secret data in files that are committed to the repository,
+
+so we would also need to load this data in some other way.
+
+But nonetheless, we can mount secrets as volumes inside of our containers so that they can access the
+
+data from the secret.
+
+Um, just a reminder here.
+
+We will cover working with Configmaps and secrets later in the course, so I'm not going to cover them
+
+now in this section.
+
+They are coming a little bit later, but don't worry, we're going to dive a little bit deeper into
+
+
+========================================================================
+STRUCTURED NOTES ADDITION
+========================================================================
+
+Kubernetes Storage and Volumes
+
+This section keeps the original notes above untouched and adds a cleaner
+study version below.
+
+1. Big Idea
+
+Containers are ephemeral.
+
+That means:
+
+- data inside the container filesystem is not a safe place for important state
+- restarting or replacing a container can lose local data
+- Kubernetes needs a storage model for persistence and sharing
+
+Kubernetes solves this with volumes and persistent storage resources.
+
+2. What a Volume Is
+
+From the container's perspective, a volume is just a directory mounted into
+the container.
+
+What changes between volume types is:
+
+- where the data really lives
+- how long the data lives
+- whether it is shared
+- whether it survives Pod replacement
+- which backend provides the storage
+
+3. Why We Use Volumes
+
+Common reasons:
+
+- persist application data
+- share files between containers in the same Pod
+- inject configuration files
+- inject secrets
+- provide scratch space for temporary processing
+
+4. Where Volumes Are Declared
+
+In Kubernetes, volumes are defined at the Pod level and mounted into one or
+more containers.
+
+The two main places are:
+
+- `spec.volumes`
+- `spec.containers[].volumeMounts`
+
+Simple pattern:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+spec:
+  volumes:
+    - name: app-storage
+      emptyDir: {}
+
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: app-storage
+          mountPath: /data
+```
+
+Important rule:
+
+- the volume name in `volumeMounts.name` must match the volume name in `spec.volumes`
+
+5. Pod-Level Thinking
+
+Volumes belong to the Pod, not directly to a single container.
+
+That means:
+
+- multiple containers in the same Pod can mount the same volume
+- the same volume can be mounted at different paths in different containers
+- Pod lifecycle often matters when choosing the storage type
+
+6. Main Volume Categories
+
+At a high level, Kubernetes storage usually falls into these groups:
+
+- ephemeral Pod storage
+- node-local storage
+- persistent cluster storage
+- configuration-backed storage
+
+7. `emptyDir`
+
+`emptyDir` is created when the Pod starts.
+
+Use it when:
+
+- you need temporary scratch storage
+- you want containers in the same Pod to share files
+- you do not need the data after the Pod is gone
+
+Properties:
+
+- lifecycle is tied to the Pod
+- survives container restarts inside the same Pod
+- disappears when the Pod is deleted
+
+Example:
+
+```yaml
+volumes:
+  - name: cache
+    emptyDir: {}
+```
+
+Typical use cases:
+
+- temporary file processing
+- caching
+- sidecar sharing files with the main app
+
+8. Local and Node-Based Storage
+
+Sometimes storage is tied to one node.
+
+This means the data may survive Pod deletion, but it is still bound to that
+specific machine.
+
+Important consequence:
+
+- if the Pod is scheduled onto another node, it may not see the same data
+
+This is why node-local storage must be used carefully.
+
+9. `hostPath`
+
+`hostPath` mounts a path from the node's filesystem into the Pod.
+
+Example idea:
+
+- mount `/var/log` from the node into a container
+
+Why it is risky:
+
+- tight coupling to the node
+- security concerns
+- not portable
+- often unsuitable for normal application data
+
+It is commonly seen in:
+
+- demos
+- local experiments
+- some infrastructure agents
+
+In general application design, it is usually discouraged.
+
+10. `local` Persistent Volumes
+
+`local` storage is the more structured alternative for node-local persistent
+storage.
+
+Key traits:
+
+- data lives on a specific node
+- accessed through PersistentVolumes
+- commonly requires node affinity
+
+Why node affinity matters:
+
+- the Pod must run on the node where the storage actually exists
+
+Good for:
+
+- high-performance local disks
+- specialized workloads where node locality is acceptable
+
+Not ideal for:
+
+- workloads that need easy failover across nodes
+
+11. Persistent Storage with PV and PVC
+
+This is the most important storage model for real applications.
+
+The key resources are:
+
+- PersistentVolume (`PV`)
+- PersistentVolumeClaim (`PVC`)
+
+Mental model:
+
+- `PV` = actual storage made available to the cluster
+- `PVC` = request for storage made by a workload
+
+Then the Pod uses the claim.
+
+Flow:
+
+```text
+Storage backend -> PersistentVolume -> PersistentVolumeClaim -> Pod
+```
+
+12. PersistentVolume
+
+A PersistentVolume represents cluster storage.
+
+It can be backed by:
+
+- cloud block storage
+- cloud file storage
+- network storage
+- local storage
+- CSI-provided custom backends
+
+Important characteristics:
+
+- capacity
+- access modes
+- reclaim policy
+- storage class
+
+13. PersistentVolumeClaim
+
+A PersistentVolumeClaim is how a workload asks for storage.
+
+The claim can request:
+
+- size
+- access mode
+- storage class
+
+The Pod usually references the PVC, not the PV directly.
+
+Example:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+14. Using a PVC in a Pod
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-demo
+spec:
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: app-pvc
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html
+```
+
+15. Static vs Dynamic Provisioning
+
+There are two main ways storage appears for a workload.
+
+Static provisioning:
+
+- an admin creates the PV first
+- then a PVC binds to it
+
+Dynamic provisioning:
+
+- the PVC is created first
+- Kubernetes provisions the backing storage automatically
+- this usually depends on a StorageClass
+
+Dynamic provisioning is common in cloud-native clusters.
+
+16. StorageClass
+
+A StorageClass defines how storage should be provisioned.
+
+It can describe:
+
+- provisioner
+- storage type
+- performance tier
+- reclaim behavior
+- binding behavior
+
+This is what enables dynamic provisioning.
+
+17. Access Modes
+
+Common access modes:
+
+- `ReadWriteOnce` (`RWO`)
+- `ReadOnlyMany` (`ROX`)
+- `ReadWriteMany` (`RWX`)
+
+Quick intuition:
+
+- `RWO`: mounted read-write by one node
+- `ROX`: mounted read-only by many nodes
+- `RWX`: mounted read-write by many nodes
+
+Whether a mode is actually supported depends on the storage backend.
+
+18. Reclaim Policy
+
+A PersistentVolume can define what happens after the claim is released.
+
+Common policies:
+
+- `Retain`
+- `Delete`
+
+`Retain` means the data is kept for manual handling.
+
+`Delete` means the underlying storage may be removed automatically.
+
+This is a high-impact production setting.
+
+19. ConfigMap Volumes
+
+ConfigMaps can be mounted as files.
+
+This is useful when an application expects:
+
+- config files
+- templates
+- property files
+- JSON or YAML settings
+
+Example:
+
+```yaml
+volumes:
+  - name: config
+    configMap:
+      name: app-config
+```
+
+Mounted files appear inside the container filesystem.
+
+20. Secret Volumes
+
+Secrets can also be mounted as files.
+
+Use them for:
+
+- certificates
+- tokens
+- passwords
+- private keys
+
+Example:
+
+```yaml
+volumes:
+  - name: secret-data
+    secret:
+      secretName: app-secret
+```
+
+Important note:
+
+- Secrets are sensitive, but not magically secure by default
+- access control and storage encryption still matter
+
+21. Cloud Storage Backends
+
+In managed Kubernetes environments, storage is often backed by cloud services.
+
+Examples:
+
+- AWS EBS
+- AWS EFS
+- GCP Persistent Disk
+- Azure Disk
+- Azure Files
+
+General pattern:
+
+- block storage is common for single-instance databases
+- shared file storage is common when multiple replicas need shared files
+
+22. CSI Drivers
+
+CSI means Container Storage Interface.
+
+This is the standard way Kubernetes integrates with storage systems.
+
+CSI drivers make it possible to:
+
+- use cloud storage providers
+- use vendor storage appliances
+- use custom storage systems
+
+If you want to understand advanced Kubernetes storage, CSI is a core topic.
+
+23. Choosing the Right Storage Type
+
+Use `emptyDir` when:
+
+- data is temporary
+- data only needs to live as long as the Pod
+- containers in the same Pod need shared scratch space
+
+Use ConfigMap or Secret volumes when:
+
+- you are injecting configuration or secret material
+
+Use PVC-backed persistent storage when:
+
+- data must survive Pod replacement
+- the application is stateful
+- storage lifecycle should be managed cleanly
+
+Use local or node-bound storage only when:
+
+- you accept node coupling
+- you understand scheduling implications
+
+24. Common Mistakes
+
+Mistake 1:
+
+- storing important data only inside the container filesystem
+
+Mistake 2:
+
+- using `hostPath` for normal production application storage
+
+Mistake 3:
+
+- forgetting that `emptyDir` is deleted with the Pod
+
+Mistake 4:
+
+- expecting a multi-node workload to share storage without using a backend that supports it
+
+Mistake 5:
+
+- creating a PVC without a matching StorageClass or provisioner in the cluster
+
+25. Interview and Real-World Questions to Practice
+
+- What is the difference between a PV and a PVC?
+- When would you use `emptyDir`?
+- Why is `hostPath` discouraged?
+- What is the difference between static and dynamic provisioning?
+- Why might a Pod fail to mount a PVC?
+- When do you need `ReadWriteMany`?
+- Why does local storage often require node affinity?
+
+26. Quick Summary
+
+- volumes are mounted directories from the container point of view
+- volumes are declared at the Pod level
+- `emptyDir` is temporary and Pod-scoped
+- ConfigMaps and Secrets can be mounted as files
+- persistent storage is typically handled with PVs and PVCs
+- dynamic provisioning usually depends on a StorageClass
+- CSI drivers connect Kubernetes to real storage systems
+
+27. Minimal Study Order
+
+If you are learning this topic from scratch, study it in this order:
+
+1. Pod volumes and `volumeMounts`
+2. `emptyDir`
+3. ConfigMap and Secret volumes
+4. PV and PVC
+5. StorageClass and dynamic provisioning
+6. local storage and node affinity
+7. CSI drivers
+
+
+how to work with them, and we'll also cover how to mount them as volumes in containers.
+
+Awesome.
+
+Let's then take a short break and I'll see you in the next lecture.
+
+
+
+Let's have a closer look at how empty dir and local volumes work.
+
+So empty dir is board level storage.
+
+Here.
+
+It is considered ephemeral by the definition between ephemeral and persistent.
+
+So this is defined at the pod level, and the volume is created when the pod is assigned to a node,
+
+it is created and accessible only from within the pod.
+
+That means we cannot have an empty dir here that is accessible, or that is created in one pod and then
+
+trying to access from another pod.
+
+Now I'm talking pods and not containers, right.
+
+So containers within the same pod, they can all access this volume here.
+
+As long as we mount these volumes within the containers, the volume is initially empty and all the
+
+containers in the pod can read and write the same files in this empty dir volume.
+
+They might also mount the volume in different paths, right?
+
+So the actual end path here doesn't really matter.
+
+So I mean end path inside of the container, the we can use different paths for that.
+
+When a pod is removed from a node, then the data in the empty door is deleted permanently.
+
+It will be gone, right?
+
+So you should never use this for persistent storage.
+
+Local volumes.
+
+They are persistent by definition in comparison to ephemeral.
+
+Here that means the data is persisted beyond the pod lifecycle and local volumes are defined at the
+
+node level.
+
+So the kube scheduler, they it knows how to assign pods to nodes based on the affinity constraints
+
+defined in the persistent volume configuration.
+
+So when we create local volumes we need to specify some node affinity configuration.
+
+We will see how to do that.
+
+And then Kubernetes will take care of assigning pods that use these volumes to the nodes that match,
+
+or to the nodes that have the volume available.
+
+So setting a persistent volume node affinity is mandatory when using local volumes, and like other
+
+persistent volumes, it does require creating persistent volume claims so that the pods can use the
+
+storage once more.
+
+Remark, which might be useful to keep in mind is that local volumes only support static provisioning,
+
+so we need to create them.
+
+We need to create persistent volumes before we create the claims for them to work properly.
+
+All right.
+
+So just to summarize here, very important to keep that in mind because keeping the data lifecycle in
+
+mind is very important.
+
+The empty door volumes they follow the pods lifecycle.
+
+That means once the pod is gone the data is gone.
+
+The local volumes they follow the nodes life cycle.
+
+That means if for whatever reason, your node is gone and it is replaced with a new node, then the
+
+data will also be gone.
+
+So none of these modules, none of these modes here, none of these volumes is actually recommended
+
+for production workloads for storing persistent data.
+
+If the data can be lost, like if it is okay to lose data, then you might consider such a solution.
+
+But normally in production setups you would not use empty dir nor local volumes, except if you have
+
+the the use case for them.
+
+Right.
+
+Which is here.
+
+Like really, you want to store some temporary ephemeral data and share between containers.
+
+Then by all means go ahead with empty dir or you want to have some also data stored in the node.
+
+Or maybe you want your containers to read some data from the node.
+
+Then local volumes here can also be used.
+
+All I want to highlight is that just keep in mind the data will be gone if the pod is deleted here,
+
+or if the node is deleted or replaced here.
+
+Awesome.
+
+That's it for an introduction to empty dir and local volumes.
+
+Let's take a short break and come back in the next lecture.
+
+
+
+Let's now explore working with the empty Dir Ephemeral storage.
+
+And let's start then with a new folder so completely clean folder we're going to use for this section.
+
+No files within here.
+
+Let's just then create a new file and we'll simply say here empty empty dir.
+
+Example dot YAML.
+
+So empty dir is ephemeral storage.
+
+That means it is bound to the pod.
+
+And as already mentioned, it will follow the pod lifecycle.
+
+If the pod gets deleted, then the the directory here and all the data that is stored in that directory
+
+will also be deleted.
+
+Let's then create a Pod definition file with API version v1 and we will have here kind pod.
+
+And then we will can already complete here let's say empty dir demo.
+
+And let's just remove here the application as always.
+
+And now for the image here.
+
+Instead of using a custom image, let's just use the BusyBox image with the tag 1.36.1.
+
+Let's now see how we can define the volumes here.
+
+So volumes they are.
+
+Once again, they are defined in two ways.
+
+Or actually they are defined and used in two different places here.
+
+So let's just fix the port.
+
+We don't need to expose any port here.
+
+And the volumes are first defined.
+
+Or they are connected to a pod by creating a volumes section.
+
+Here this volumes configuration is a list of objects.
+
+So we can specify more than one volume.
+
+And then the first one here.
+
+Let's then start passing name is going to be let's say temporary storage.
+
+And then we will specify the actual configuration.
+
+So to specify an empty directory we will use the empty dir key here.
+
+And that's going to specify the configuration of our empty dir volume.
+
+So we can pass an empty configuration by just passing the curly brackets like so open and close.
+
+Otherwise we have options to set the medium here if we wish to use memory instead of disk storage.
+
+Otherwise, it will default to disk storage, which will be probably 99% of the cases.
+
+You will use this.
+
+You might want to use memory if you have some some application that needs very fast, very high performance.
+
+But just be aware that this will also consume the resource limits and requests here from the containers.
+
+Right.
+
+So if you put let's say two gigabytes here in the memory then and you don't have enough resource requests,
+
+then this will lead to errors.
+
+We can also specify the size limit here for our volume.
+
+And we can say for example 500MB or 512MB or 256MB.
+
+So we can go with whatever size limit we want to set here.
+
+Otherwise it will just default to what is available in terms of storage.
+
+And if we leave this empty, then these two configurations they will not be set for this volume.
+
+So in the first moment Here we have defined the volume within the pod so we can define an empty volume
+
+that's also creating the volume.
+
+Or we can add here other types of volumes which will explore a little bit later on.
+
+In this section we will see how we can reference volumes that are externally defined, and then bring
+
+them and make them usable from within the pod.
+
+So this is the first moment we have created the volume definition.
+
+And now we need to mount this volume inside of our containers.
+
+To mount a volume.
+
+We're going to pass the configuration option here volume mounts.
+
+And this is once again a list or an array of objects which will specify where this volume is actually
+
+mounted in which directory within the container.
+
+The data from this volume will be available.
+
+So the name here that we will use it has to reference the name of the volume at the bottom here, so
+
+that Kubernetes knows which volume we are talking about.
+
+So this has to be the same, right?
+
+So far here we have been using name keys as something that is fairly arbitrary.
+
+But here it changes a little bit.
+
+So the name is kind of a reference to the volume here.
+
+So these two they need to match.
+
+And then we will specify the mount path.
+
+And the mount path is where or under which directory or folder this volume here will be mounted.
+
+So here we can say anything we wish.
+
+I'm just going to put here user slash share forward slash temporary.
+
+And then we have the data from this volume actually mounted inside of this directory.
+
+Great.
+
+Let's just explore or let's begin by exploring the transient the ephemeral nature of this volume.
+
+So for that we're going to change a little bit the command that we use here for BusyBox so that the
+
+container stays up.
+
+And then the command will be a list of strings.
+
+So pass the shell string here, and then we'll pass the dash C so that we run a command with shell.
+
+And the command we want to run is sleep 3600.
+
+That's great.
+
+So let's save this.
+
+And I believe that's all we need in our configuration here for us to explore a little bit the transient
+
+and the ephemeral nature of this temporary storage.
+
+Let's then switch to the terminal here and let's apply our file.
+
+You can pass the file or the entire directory here.
+
+Doesn't really matter.
+
+And then we should that we should get eventually here that our pod is up and running.
+
+That's looking good if we also describe the pod.
+
+So if we describe the pod empty or demo then we will see here that under the volume section we have
+
+a temporary storage of type empty dir.
+
+The medium is not set.
+
+The size limit is also not set.
+
+And if we scroll up a little bit more in the container section, we will see here that there is a mounts
+
+section which specifies also our temporary storage with the container ready and able to work properly.
+
+Then we can now SSH or let's exec into the container.
+
+So we're going to run kubectl exec dash it and we will pass.
+
+Now the pod here.
+
+So the name of the pod is empty dir demo.
+
+And then we'll pass dash dash.
+
+And what we would like to exec in this pod here is going to be the shell command.
+
+So the moment we do that we now have a new shell here.
+
+And we can change directory.
+
+So let's change into our user share demo or temp not demo.
+
+Oops temp like so.
+
+So as you can see the directory exists here but there is nothing present in the directory.
+
+So if we remove the a here, we will see that there is no actual directory present here.
+
+We can just create a new file.
+
+So let's say echo hello from temp storage.
+
+And we will just dump these results here into the demo dot.
+
+TXT file.
+
+So we can now confirm that the file exists here.
+
+That's looking good.
+
+And if we were to now exit the container here and let's exit once again we can as always just get the
+
+contents of the file.
+
+So usr share temp and then cat here the demo dot txt content so that we can see that the file is actually
+
+stored here and it still exists.
+
+If this container here were to be restarted, but the pod were not to be recreated, then the file will
+
+still be available, right?
+
+So the the storage here is bound to the pod lifecycle, not to the container lifecycle.
+
+So if the container for whatever reason gets restarted, then we're still good.
+
+The file will still be available there, but if the pod gets deleted and recreated then the file will
+
+be deleted as well.
+
+We can visualize this by let's run Kubernetes or kubectl delete and we're going to pass the file.
+
+Let's also pass the force here because I believe the sleep command doesn't exit gracefully.
+
+So the file we want to delete is this one empty dir.
+
+So everything is deleted here.
+
+And if we were to now kubectl apply or run kubectl apply with the file once again and then exec into
+
+the container.
+
+So let's do this here once again.
+
+And we were to try to get the contents of usr share temp.
+
+Or actually let's just change into this directory here.
+
+So change usr share temp.
+
+Then we can confirm here that the file doesn't really exist anymore.
+
+So if the pod gets recreated then once again whatever storage, whatever is stored under the empty dir
+
+volume will be deleted.
+
+Just keep that in mind.
+
+Doesn't mean we should not use it, just simply means that we should be aware of this and the use cases
+
+for when ephemeral storage is helpful.
+
+One of these use cases is when we want to actually share data across containers.
+
+Let's say that this container here or the first container is, let's say creating some logs.
+
+And then we want to retrieve these logs and process these logs and then export these logs with a second
+
+container, maybe a sidecar pattern here where the first container is not responsible for processing
+
+the logs, it just generates logs.
+
+And then the second container will do this processing.
+
+So before we create the the new container here, let's just come back to the terminal and let's delete
+
+everything we have.
+
+So in the terminal here we will run kubectl delete once again.
+
+And now let's come back to the IDE.
+
+And let's now start creating our second container.
+
+So we're going to keep things very simple here I'm just going to create another BusyBox container which
+
+will be let's say the second.
+
+So this one here can be the empty the writer.
+
+And the second one here can be the empty the reader.
+
+And let's now say that we want only the writer here to be able to actually write to the contents of
+
+this volume here, and the reader should be able to only read from that.
+
+So we can also specify the read only option here and set that to true.
+
+And this will make sure that the the empty reader here is only able to retrieve the contents, but not
+
+really to write to this volume.
+
+So the process for defining a volume mount here.
+
+So as you can see the empty the writer stays the same.
+
+Now we would like to also mount this volume in another container.
+
+So the name here has to be the same right.
+
+The name has to be the same as this volume.
+
+But the mount path here can actually differ.
+
+So let's just say here instead of mounting instead of user share temp, we're just going to mount this
+
+inside of forward slash temp like so.
+
+So we will see that it is perfectly fine to use a different mount path.
+
+It simply means that the contents of this volume here will be visible under two different paths, depending
+
+on the container you are on.
+
+For the reader, one is going to be forward slash temp for the writer one oops.
+
+For the writer one it will be forward slash user forward slash share forward slash temp.
+
+That's perfect.
+
+So let's save this here.
+
+And let's come back to the terminal now to take our new updates here for a spin in the terminal.
+
+Let's just clear everything here.
+
+And now we're going to apply once again our file.
+
+So kubectl apply the file.
+
+And we can see that the pod was correctly created.
+
+We can also confirm that both of the containers are up and running here.
+
+And if we were to describe the pod then we would also get that we have the the single volume.
+
+So we have a single volume here the temporary storage.
+
+And also we have this kube API access.
+
+But this is something that's managed by the system.
+
+So we have the temporary storage here.
+
+And then we have the amount within the reader.
+
+So let's have a look here that is empty the reader.
+
+Correct.
+
+So this has the volume mount here.
+
+And you can see that this is read only.
+
+Right.
+
+So Kubernetes already identifies that this is read only.
+
+And if we have a look at our previous one this is read write.
+
+Great.
+
+So let's now have a look at how we can work with this containers here.
+
+So if we were to let's first of all try to exec into our reader here or actually let's check into our
+
+writer.
+
+So now we have two containers inside of the pod.
+
+And this is probably something I believe we haven't come across so far in the course.
+
+But this is a great moment for us to explore that whenever we have two containers, we do need to specify
+
+which or two or more containers.
+
+We do need to specify which container we wish to exec into, and that's done via the dash C flag, and
+
+then simply passing the name of the container.
+
+In our case that is empty der writer like so.
+
+So let's start with the writer.
+
+We will exec into the writer.
+
+We will change into the user share temp directory.
+
+And now we're just going to echo here.
+
+Hello from empty dir writer.
+
+And we will simply echo this into the hello dot.
+
+TXT file.
+
+We can now exit this and let's exec now into our reader.
+
+So let's remove writer here.
+
+And now we're going to execute the commands from within the reader.
+
+Let's now change into the forward slash temp directory.
+
+And let's have a look at everything that is available here.
+
+Oops sorry that is not the forward slash temp is forward slash temp like so I believe that's how I wrote
+
+it.
+
+And as you can see we can see here the hello dot.
+
+TXT file.
+
+So we can also retrieve the contents of this file without any problems.
+
+If we were however to try to create something.
+
+So let's say hello from empty dir The reader, and we were to try to actually create this.
+
+Hello reader.
+
+Dot.
+
+TXT file like so.
+
+Then we will see that we get an error.
+
+So we cannot create the file.
+
+Because this is a read only file system.
+
+We can also confirm here that we have only read permissions.
+
+So this is one way for us to stay a little bit on the safer side.
+
+If we want containers to just retrieve information, we can set the read only flag to true.
+
+And that will ensure that these containers are not able to edit or modify the contents of the volume,
+
+they are just able to retrieve them.
+
+Perfect.
+
+So that's it for our discussion around the empty Dir volume.
+
+And once again, this is an ephemeral volume.
+
+So you should keep in mind keep that in mind when using it and making sure that it actually matches
+
+your needs and you are not going to suffer, or there will be no problems if this data gets deleted.
+
+Let's delete everything that we have here, and let's then take a short break and I'll see you in the
+
+next lecture.
+
+Great.
+
+Before we dive deeper into working with local volumes, let's just discuss persistent volume claims
+
+because they come into the picture.
+
+Now, whenever we want to work with local volumes, and they will also be useful for working with a
+
+variety of different volumes.
+
+Good.
+
+So persistent volume claims is what allows us to claim the robust storage and actually use them in pods.
+
+We cannot use persistent volumes directly in pods.
+
+We need to go via claims.
+
+So the claims here, the persistent volume claims are actually what reserves the persistent volume.
+
+So here PV stands for persistent volume.
+
+Or that creates and reserves a PV.
+
+And this really boils down to whether we are using static provisioning the PV.
+
+The persistent volume must exist beforehand.
+
+But when we are using dynamic provisioning then it might not exist beforehand.
+
+It doesn't have to.
+
+It can also be created as a result of a claim being created.
+
+So claims are bound to a single persistent volume.
+
+Very important here.
+
+That's a 1 to 1 relationship, or many to one is not one to many, it is 1 to 1.
+
+If a persistent volume is bound to a claim, then it cannot be bound to any other claim.
+
+And if we have a persistent volume that has ten gigabytes and the claim needs only one gigabyte, then
+
+there will be nine gigabytes of excess storage in this persistent volume that cannot be used by other
+
+claims.
+
+This is very important to keep in mind.
+
+And that's where and this particularly important for static provisioning.
+
+Right.
+
+So dynamic provisioning would look at the request from the claim and it would create volumes according
+
+to this request.
+
+So it's less of an issue.
+
+But when we are using static, when we are creating the persistent volumes beforehand, then this is
+
+something we should be mindful of.
+
+So we can specify.
+
+We can set specific criteria in a claim so that only the persistent volumes that match this criteria
+
+are considered for binding.
+
+And also, let's once again remind ourselves that we should be mindful of the possibility for extra
+
+unused capacity, particularly with static provisioning.
+
+So there are a couple of reclamation policies once a claim is deleted.
+
+Basically, Kubernetes needs to answer the question what happens with the persistent volume.
+
+Right.
+
+So we used to have this recycle here that's currently deprecated.
+
+And dynamic provisioning is encouraged.
+
+As you might imagine recycle here is really just scraping removing the data and making the persistent
+
+volume available.
+
+Once again we have retain here to begin with.
+
+So retain will retain the volume.
+
+It will not delete the volume.
+
+So if the persistent volume is dynamically provisioned and we set retain as the reclamation policy here.
+
+Then if the claim gets deleted, the volume will still be maintained.
+
+And we can either have a look at the data, clean the data ourselves, I don't know, but we can just
+
+retain the volume.
+
+We also have the possibility of deleting the volume.
+
+And this is the default right?
+
+So when we dynamically provision things and the claim gets deleted, it is only natural that hey, we
+
+are going to go and delete the volume as well so that we can also save some costs.
+
+We don't have unused volumes.
+
+There are also a couple of access modes that might be interesting, so read the write once the volume
+
+can be mounted as read, write by a single node.
+
+So node is the keyword here and not pods right.
+
+So a volume can still be used by any number of pods, any number of pods within that node.
+
+But it can be mounted as read write by a single node.
+
+Read only many.
+
+Here the volume can be mounted as read only by many nodes.
+
+We have read write many.
+
+The volume can be mounted as read write by many nodes, and we have also a newer one which is read write
+
+once pod and the volume can be mounted as read write by a single pod.
+
+So basically if we want to restrict a volume to be used by a single pod, then in our persistent volume
+
+claim here we would specify that the access mode is read.
+
+Write one spot.
+
+If we specify only read write once, then there is no guarantee that only a single pod will use that
+
+volume.
+
+Great.
+
+So just to summarize here, static versus dynamic provisioning.
+
+So static is really best effort match based on access mode and size requests.
+
+So when we create our volume claim we can say what's the access mode we want and how much size we would
+
+like.
+
+And then static provisioning is going to look at the existing persistent volumes and it's going to try.
+
+A best effort match might not be fulfilled depending on what's available.
+
+So if we ask for something that is read, write once with five gigabytes.
+
+But there is only persistent volumes that are read, write once with two gigabytes, then this new claim
+
+will never be fulfilled.
+
+So we create the persistent volumes first.
+
+We then create a persistent volume claim which will hopefully find, hopefully find a matching persistent
+
+volume.
+
+And then the pods can use this persistent volume claim to actually mount the volume within containers.
+
+Now over to dynamic provisioning.
+
+In dynamic provisioning, the storage is provisioned dynamically when persistent volume claims are created,
+
+and if the backend supports what's requested, then this will always be fulfilled, right?
+
+So as long as there is space and you can think here, cloud storage is most of the time advertised as
+
+infinite storage space.
+
+So space is not going to be an issue as long as the adopted solution also supports the specified access
+
+mode, then the volumes, the persistent volumes will be created automatically.
+
+And we don't need to do that manually.
+
+So here we first create the persistent volume claim.
+
+And then this is going to lead to the creation of the persistent volume behind the scenes.
+
+And if we create a new claim then this will also create a new persistent volume.
+
+And then the pods can use this persistent volume claims.
+
+And just to highlight we can have pods here using persistent volume claims backed by both static provisioning
+
+and dynamic provisioning.
+
+That's fine right.
+
+So pods can use multiple persistent volume claims here.
+
+And if they are backed by either static or dynamic provisioning, this from the pods perspective doesn't
+
+really matter.
+
+All right.
+
+Amazing.
+
+So hopefully the concepts are clear to you.
+
+Let's then take a short break and come back in the next lecture.
+
+Hello and welcome back.
+
+Let's now explore persistent volumes and persistent volume claims by using the local volume.
+
+This is a persistent volume, so it's not ephemeral like the empty door.
+
+And it will give us enough for us to explore the main topics around how to create a persistent volume,
+
+and how to create a persistent volume claim, and how we use that also within pods.
+
+So let's start by just making sure that we have no resources in the default namespace.
+
+If you have any other pods you're running, that's also not too bad, but I'm just starting with a clean
+
+slate.
+
+A small warning here.
+
+I want to show you an error that we can very commonly come across.
+
+So I'm not going to do the necessary setup now in the minikube side to begin with.
+
+That's on purpose.
+
+We're going to create all the resources.
+
+And then we will see which kind of error comes up.
+
+And we will see what are the the necessary requirements, what are the conditions that must be fulfilled
+
+for us to be able to use the local volume.
+
+And let's start creating our new file here.
+
+I'm just going to use local volume like so.
+
+And or we can also say local volume for example.
+
+And then here we will create a couple of resources.
+
+The first one will be our persistent volume.
+
+So the API version once again is V1 here.
+
+And the kind will be a persistent persistent volume like so.
+
+You will see that this will already auto populate with some options here.
+
+And we can actually delete.
+
+Let's just delete here.
+
+Most of them.
+
+We're just going to leverage this here and didn't really help much.
+
+So maybe if you just want to skip the templating that's also good.
+
+So the name here will simply say local volume.
+
+And under this back here we will start by specifying a few things.
+
+So first thing is the capacity of our volume and the storage here.
+
+Let's say we're going to set this to one GB byte like so.
+
+And you can set to more to less depending how much you have available in minikube, the volume mode.
+
+Here is another thing that we would set.
+
+And this is going to be a file system volume.
+
+If you have any doubts about any of these options, then you can always hover over them to get a little
+
+bit more information.
+
+Right.
+
+So if you're not sure about what this volume mode means here, if you hover over this, then you will
+
+see whether this or you see the explanation that this will define whether this volume is intended to
+
+be a formatted file system or just a raw block state.
+
+The file system here is implied.
+
+So if we do not specify volume mode, it will default.
+
+It will default to file system.
+
+And this is once again normally the use case you come across.
+
+You use volumes to manage files rather than just keeping them in raw block state.
+
+But you can still set this to block in case you have that use case.
+
+The access modes here we will specify a single one.
+
+So this is an array.
+
+So it's a list.
+
+And we will specify read write once here so that this volume can be mounted in or by a single node.
+
+And that makes sense because this is basically just a directory inside of the node.
+
+Right.
+
+So we just specify here access modes to read write once.
+
+So we can also specify the reclaim policy.
+
+Here we can say persistent volume reclaim policy like so.
+
+And there are a couple of values that we can use.
+
+We can set this to retain.
+
+So if this persistent volume is deleted the data will be retained here.
+
+So basically this defines what happens when the volume is released from its claim.
+
+Right.
+
+So it's not when the persistent volume is deleted itself, but it's when the claim is deleted.
+
+And then as you can see here, the valid options are retain delete and recycle.
+
+We also discussed that we don't need to specify this here.
+
+So the retained one is is the default for manually created persistent volumes, and the delete is the
+
+default for dynamically provisioned persistent volumes.
+
+So if we remove that here, this will be the default for us because this is a manually created persistent
+
+volume.
+
+We can also leave this here.
+
+Now the important thing for us to set is the storage class name here.
+
+And this will be local storage right.
+
+So this will be what we will use in the persistent volume claim afterwards to look for this specific
+
+storage class or for this specific persistent volume.
+
+We will then also set a local option here.
+
+And we will set the path that we will mount inside of the node.
+
+And we could simply say here let's say mount.
+
+And then we're going to add disks and let's say here temp or let's say local volume.
+
+Let's say local one like so.
+
+Just so that we could potentially create more local volumes.
+
+Important thing is that this path here.
+
+It should already exist inside of the node, and we have not created this path yet.
+
+And I want to show you which kind of error we will get if this path doesn't exist.
+
+But just keep in mind that eventually we will have to create this inside of the node so that everything
+
+works as expected.
+
+Now, whenever we create a new local volume here, which is specified by this local option here, then
+
+you can see that this represents directly attached storage with node affinity.
+
+So now we need to specify a node affinity option here or configuration because once again this is mounted
+
+in the node.
+
+And we might have multiple nodes.
+
+So pods that use this volume here they should be scheduled in the node where this volume is actually
+
+created.
+
+Because otherwise there would be some issues here when trying to access the data from within the volume.
+
+Let's say that we have a node one and two, and then only node one has this actual path here.
+
+So if the pods were to be scheduled in node two, they would not work as expected for that, to ensure
+
+that we are actually scheduling nodes in the correct or scheduling pods, sorry.
+
+In the correct node we will specify the node affinity option here, and then we'll say required.
+
+And then we will say here node selector terms.
+
+And this will be a list of selector terms.
+
+So we can specify multiple multiple conditions here.
+
+And we'll simply say that for the first one we'll say match expressions.
+
+So once again our expressions here are coming into play.
+
+And the key that we will look for is kubernetes.io/hostname.
+
+And let me just show you where we get this information from.
+
+So back in the terminal here let's get all our nodes right.
+
+So I just want to clarify where we are getting that information from.
+
+And if you have started minikube with more nodes you will have more nodes here.
+
+So just pick one of them.
+
+We're going to use minikube here.
+
+I'm going to say kubectl describe describe node.
+
+And then we will pass the minikube node name here.
+
+And now we get all the information of the node.
+
+So if we scroll up you can see here the capacity as well.
+
+This might be useful.
+
+How much CPU how much memory this node has.
+
+It's a lot of stuff here.
+
+And this is also coming from the system because we didn't specify anything when we created the node.
+
+So let's scroll up a little bit more.
+
+Or actually we didn't create the node.
+
+We didn't specify anything when we created our minikube cluster.
+
+Minikube is just taking some defaults from behind the scenes.
+
+So this important thing here under labels you will find the Kubernetes IO forward slash hostname.
+
+And this is the one that we are looking for.
+
+We could also go for another one which is this minikube.k.io/name.
+
+And it's really up to you.
+
+Here they are both the same.
+
+But if it comes to the situation where one of them actually has the information you want and the other
+
+one doesn't, then just feel free to pick any of this.
+
+So that's where I'm getting this information from, and I'm just using the match expressions here to
+
+show you another use case for this.
+
+So let's come back to the IDE.
+
+The key is then the host name the operator will be in.
+
+And then the values here will simply be a single value.
+
+We're going to simply say minikube like so right.
+
+So this is what we need to set here for our volume.
+
+Or actually not only what we need to set, but also some useful defaults here for us to explore how
+
+we can actually work with this volume or how we can configure it.
+
+All right.
+
+So let's save this.
+
+Let's come back to the terminal.
+
+And let's see here.
+
+Let's clear the screen.
+
+So and let's see what we can do or what happens here once we apply the file local vol example.
+
+And then we can also get our volumes.
+
+So kubectl get volume we're going to oops sorry.
+
+That should be persistent volume.
+
+That's looking good.
+
+And as you can see here we have a few things.
+
+And there is nothing really saying here that there was any kind of error.
+
+Maybe we can describe this volume.
+
+So kubectl describe and a shorthand here is PV right.
+
+Instead of us having to write persistent volume all the time.
+
+And then we will simply say here local dash volume like so at the moment we do that here, we will simply
+
+see the information that we have provided.
+
+We didn't provide any labels nor annotations.
+
+And as you can see here, there is nothing saying that this was not successfully created.
+
+So the source is here.
+
+We didn't get any errors.
+
+It might look good for us.
+
+Let's then continue with now the persistent volume claim.
+
+So back in the IDE here let's create a new resource.
+
+And that's going to be the persistent volume claim.
+
+The API version will also be v1, and the kind here will be persistent volume claim.
+
+And now let's just remove the duplication here, and let's have a look at the fields that were created
+
+for us.
+
+So the first one metadata here we are already familiar with I'm just going to write local volume claim
+
+like so.
+
+And now we have a few things here.
+
+We have the resources.
+
+We have the volume mode.
+
+We have access modes.
+
+And we can start using this to specify the conditions, the requests that we wish here for this persistent
+
+volume claim.
+
+Kubernetes will then take this conditions, and it will look for a volume that satisfies them to a in
+
+a best effort basis here, or if it is also possible to to dynamically provision the volume, then Kubernetes
+
+will also do so.
+
+So basically this means hey give me a volume that has this criteria, this characteristics here.
+
+And if you cannot find one and you can dynamically provision one, then please provision it.
+
+Otherwise we will get an error.
+
+Right.
+
+So let's try to get an error here.
+
+Let's say that we want a volume with two GB bytes.
+
+Remember that our volume here has a storage capacity of one GB right.
+
+So we're going to have two GB bytes.
+
+The volume mode is file system.
+
+This is matching here.
+
+That's no problem.
+
+The access modes is also matching.
+
+We have read write once here.
+
+That's great.
+
+And now we can also specify the storage storage class name like so for local storage.
+
+So that we look only for the persistent volumes that have this storage class name also set to local
+
+storage.
+
+All right.
+
+So this will give us an error.
+
+It's not going to be able to find any volume that matches the resource requests here.
+
+So let's save this.
+
+Let's come back to the terminal And let's now apply once again.
+
+So kubectl apply local volume example.
+
+And then we'll see that the volume is unchanged and the volume claim has been created.
+
+We can now inspect our persistent volume claims here.
+
+And you will see that the volume claim will be in a pending state.
+
+So if Kubernetes cannot find nor dynamically provision a volume that matches the criteria specified
+
+in the claim, we will enter into a pending state.
+
+If we were to describe this PVC here, then we will see that once again, we have the message here that
+
+the provisioning failed.
+
+Now it's a little bit weird because it simply saying storage class here not found.
+
+But actually this is because we are not able to find a volume that is matching the conditions that we
+
+have specified.
+
+Let's then come back here to our IDE and let's change the request to one GB byte.
+
+That's the only thing we will do.
+
+We're going to come back here to the terminal.
+
+We will apply the changes here once again and let's have a look.
+
+So this is forbidden.
+
+So we cannot really make this change here.
+
+So we need to actually delete everything kubectl delete.
+
+And let's pass the file here local volume example.
+
+And let's then recreate that like so if we were to now get our persistent volume claims here, we will
+
+see that the status is now bound.
+
+So it was able to actually find and match the capacity and the storage class as well here.
+
+And as you can see, the error message that we got a little bit before, it was quite cryptic because
+
+it was kind of hinting that the problem was with the local storage storage class, but in reality,
+
+the problem was that the volume or the the requested capacity was not matching any of the volumes that
+
+were currently existing.
+
+If we also get our persistent volumes here, we will also see that there is a status of off bound here.
+
+So this status here bound it shows that the volume is taken.
+
+Let's say it's bound to a specific persistent volume claim.
+
+Let's describe here.
+
+Let's see.
+
+We can also have a look at the claim here.
+
+So we don't even need to describe.
+
+Right.
+
+So we can see that the claim is here.
+
+And it is showing which claim is actually using this persistent volume.
+
+Now once again the relationship between persistent volumes and persistent volume claims it's a 1 to
+
+1 relationship.
+
+That means if a claim or if a persistent volume is bound to a claim, it cannot be bound to another
+
+claim.
+
+All right.
+
+I believe that the lecture is getting a little bit longer than I expected.
+
+We still have to create this local directory here in our node.
+
+And we would like to also set up a pod to see how everything is going to work.
+
+But since we are already extending the discussion for a little bit longer than I planned, let's take
+
+a quick break and let's come back in the next lecture.
+
+
+
+Hello and welcome back.
+
+Let's continue with the implementation.
+
+Here.
+
+We can confirm that we have our persistent volume and our persistent volume claim, both available here,
+
+and that the claim is bound and that the volume is also bound.
+
+The name of the claim is local volume claim.
+
+This is something that we will need to use when we create the pod.
+
+Let's then jump to the IDE and I'll continue here in the local volume file.
+
+So let's just create a new resource here.
+
+And that's going to be a simple pod.
+
+We're going to say Apiversion V1 kind pod.
+
+And we're just going to go with the autocomplete here.
+
+And we will say local volume example.
+
+Right.
+
+So or just local volume pod can be like so let's remove the duplication here.
+
+We will also use the same image that we have used for the empty dir.
+
+So I'm just going to copy here the container.
+
+So I'm just going to copy the whole thing except for the volume here.
+
+Let's copy this.
+
+Let's paste this in the specification here.
+
+And let's remove the volume mount as well as the additional container that we have created.
+
+So in the end here we should have just a single container.
+
+And we're going to put here let's say local volume.
+
+We will use the image BusyBox.
+
+We will run the shell command sleep so that we have a bit of time to play around with this.
+
+And this is the definition of our pod.
+
+The process for using a persistent volume is exactly the same, in the sense that we will also define
+
+the volume here under the volumes section of the pod, and then we will mount this volume somewhere
+
+in our container.
+
+So this follows the exact same structure as this definition here.
+
+It's just a different configuration or a different object schema when we are using a persistent volume
+
+claim.
+
+So we're just going to call this the local volume.
+
+Or let's just add like this local volume.
+
+And then the difference here is that we will not create an empty Dir configuration, we will rather
+
+create a persistent persistent volume claim configuration, and this will specify the claim name here,
+
+which will be the name of our persistent volume claim.
+
+If we scroll up a little bit, we can just copy the metadata here and let's paste it here.
+
+So as you can see we now were able to access this volume here via the local volume claim.
+
+And we will then have access to the underlying persistent volume.
+
+Now that we have declared the volume here in the pod configuration, we can add this to the volume mount
+
+section of our container definition.
+
+And then once again this is at the container level.
+
+And all we have to do is just once again, as you already know, we will reference the name of the volume.
+
+That's going to be the same as what is specified here that really needs to match the name of the volume.
+
+Similarly to the empty dir.
+
+And we will specify the mount Path and in this case here since our directory.
+
+Let's have a look here.
+
+Since our directory is mount disks let's just use then here for the slash mount forward slash local
+
+like so.
+
+And I believe there is a small typo here.
+
+So let's just remove this additional H.
+
+And we are good to go.
+
+Now this from the configuration perspective we are good to go.
+
+But remember we still have not created this path here in our node.
+
+That means we will run into an error when we try to mount this volume here.
+
+And that's what I want to show you.
+
+So let's save this.
+
+Let's come back to the terminal.
+
+Let's clear the screen and let's run kubectl apply.
+
+Let's apply the local volume example.
+
+We will see that the pod here has been created.
+
+So let's now get the pods kubectl get pod.
+
+And you will see that it is still in container creating.
+
+And even if we were to wait a bit more here, it will be stuck in the container creating error and it
+
+will eventually start erroring out.
+
+So what we can do here is we can describe this pod.
+
+Kubectl describe pod.
+
+Let's paste it here.
+
+And as you can see we already get an a failed mount reason here.
+
+An event of type warning.
+
+And we can see that the initialization failed for this local volume because the path does not exist.
+
+So it tried to find this path in the node.
+
+It could not find this path in the node.
+
+And then the initialization failed.
+
+If we have a look at the pods once again we will see that we are just stuck at container creating.
+
+So let's now delete here our pod.
+
+So kubectl delete pod and we will delete just the pod.
+
+We're not going to delete the persistent volume nor the persistent volume claim.
+
+Let's just delete the pod here.
+
+And let's now create this path in our minikube host.
+
+So let's just once again confirm that we get a node with minikube name.
+
+And let's now SSH into this node by running minikube SSH.
+
+This will then land us inside of the node.
+
+And we can now perform operations here.
+
+So I would like to create this directory and we need to add sudo here.
+
+So let's run this commands as sudo make directory.
+
+And since we are creating a nested directory here let's add the dash p flag and then pass the directory
+
+name.
+
+And I also would like to change the mode to allow everything in this directory.
+
+And that's all we need to do really.
+
+So we can now exit from this.
+
+So these are the two commands that we need to do basically just to prepare this node here for the local
+
+volume.
+
+If we were to just list what is inside of this folder by changing the directory into here, oops.
+
+Let's change into mount disks and then local one.
+
+And we can confirm that the directory exists but there is nothing inside it.
+
+Let's then exit this.
+
+And this will also clear the screen for us.
+
+And we can now run the kubectl apply command once again.
+
+And we will confirm that the pod has been created.
+
+And if we were now to get our pods kubectl get pod.
+
+We can confirm that the pod is in a running state.
+
+So it was possible to find the the local directory.
+
+And as you can see here, we did not need to recreate neither the volume nor the volume claim.
+
+Now that we have the pod here up and running, we can exec into the pod by running kubectl exec dash
+
+it.
+
+Since it has only one container, we can pass the just the name of the pod.
+
+And let's now execute a shell.
+
+Or let's start a shell inside of this container, and we can just remember the path where this is mounted
+
+is inside mount forward slash local.
+
+Right.
+
+So this is different than the path in the node which is mount disks local one.
+
+This is just local like so because we have specified in our volume mounts section.
+
+So let's now just echo hello from pod into a hello dot.
+
+TXT file.
+
+If we now have a look at the contents of the directory.
+
+Oops like So then we can confirm that this is here.
+
+That's perfect.
+
+Let's now exit this and let's run minikube.
+
+SSH.
+
+Once again, let's now change into the mount disks local one like so.
+
+And if we now have a look at the files here, we can see that the file was created inside of this directory.
+
+So this is great.
+
+Now any other pod or container would be able to access this file, as long as they also have the persistent
+
+volume in their definitions.
+
+If we were to now exit here, and just the last thing I want to show you, let's delete our pod.
+
+That's going to be local volume pod.
+
+And if it takes a little bit too much you can also add a dash dash force here just to make it faster.
+
+Let's now apply this once again the local example.
+
+It's going to create a new pod.
+
+We can exec into this pod once again.
+
+And we can now confirm that if we were to print the contents of Mount Local and Hello.txt, we can confirm
+
+that the contents of the file are still there, even though the pod was deleted and recreated.
+
+This was not the case with the empty dir, because the empty dir volume was bound to the pod lifecycle.
+
+That means deleting the pod deletes also the data.
+
+That's great.
+
+Let's now exit from this pod, and let's come back to the IDE.
+
+And let's here create another pod.
+
+So we're going to create not an additional container inside of the pod.
+
+But this is going to be an entirely new pod which will be our new or local volume pod two.
+
+Right.
+
+So this is just going to be a completely new pod.
+
+And we will also mount this local volume here under the Or with the local volume claim.
+
+Also mount this into our Mount Local.
+
+But now we can say let's say for example local two.
+
+So we have now two pods which are using the same persistent volume claim.
+
+They are then effectively getting Ahold of the same data behind the scenes, and we're just mounting
+
+it in a different path inside of the container of our second pod.
+
+Let's save this.
+
+Let's come back to the terminal.
+
+Here, let's run kubectl apply once again so that we create our a new pod two.
+
+And now if we were to exec into this pod two so kubectl exec.
+
+Now that's going to be local volume pod two.
+
+We can confirm that if we were to print the contents here of Mount Local two forward slash.
+
+Hello dot txt the contents of the file are also there.
+
+That's great.
+
+So we were able to effectively decouple storage from the pod and container lifecycle.
+
+As you can see, the files or the contents that are created by the pods and their respective containers
+
+inside of this persistent volume, they are reflected across pods and also outside of the pod altogether.
+
+When we want to have a look at the contents of our Kubernetes node, let's then exit this here.
+
+I believe that's a great moment for us to take a short break and let's come back in the next lecture.
+
+
+Hello and welcome back.
+
+Let's explore a little bit.
+
+What happens when we delete the persistent volume claims and persistent volumes that we have created?
+
+So let's start by deleting here.
+
+So let's have a look at all that we have.
+
+So kubectl get pod pv pvc.
+
+And we will get all the things that we have here.
+
+We have two pods.
+
+We have one persistent volume and one persistent volume claim.
+
+Let's clear the screen.
+
+And let's start by deleting the pods.
+
+Kubectl delete pod local volume example and local volume volume.
+
+Example two.
+
+Example two.
+
+Like so.
+
+And we will also pass a force flag here.
+
+And that's going to delete both pods for us.
+
+Oops I believe that this should be local volume pod and not example.
+
+Sorry for that.
+
+Let's have a look.
+
+Local volume pod.
+
+Local volume example.
+
+Local volume pod.
+
+Looks better.
+
+Great.
+
+So the pods are deleted.
+
+Let's now delete our persistent volume claim with cube CTL delete PVC.
+
+And that's going to be local volume claim like so.
+
+And remember the policy that we set here in our IDE in the definition for our persistent volume is the
+
+retain policy.
+
+This is also the default for manually created persistent volumes.
+
+So if we come back to the terminal and we get the persistent volume here, then we can see that the
+
+persistent volume is still existing.
+
+It is retained.
+
+And now the status changed to released.
+
+Now this doesn't mean that the the persistent volume can be reused in other claims.
+
+And so now here if we were to let's have a look if we can apply once again the local volume example.
+
+And as you can see here it says that the local volume claim has been created.
+
+But when we have a look at the persistent volume then we still get the status released.
+
+And if we have a look once again, let's add here the persistent volume claim.
+
+We will see that this persistent volume claim is in a status of pending.
+
+So it cannot be reclaimed.
+
+It cannot be reused.
+
+Whenever the policy here is retained, then the administrator would have to come and do some manual
+
+work here to maybe clean up this volume and then potentially recreate it.
+
+So the idea is that whenever you use the retain policy, the status of the persistent volume will be
+
+released if the persistent volume claim is deleted, but it will not be automatically reused by newer
+
+volume claims by newer persistent volume claims.
+
+Even if the criteria even if the conditions here they match what the volume or they match the volume
+
+characteristics.
+
+Naturally, if we have a look at minikube SSH here, we can also get the contents of our file.
+
+So mount disks, then local one, and then we will have hello.txt.
+
+The file is still there, right?
+
+So deleting the volume claim and recreating the volume claim.
+
+It doesn't delete the underlying files if the policy is retained.
+
+So the persistent volume will stay there and it will not be deleted.
+
+Let's then exit this.
+
+Let's now have a look at what happens when we delete everything.
+
+So we're just going to delete with a force here.
+
+And we will pass the local local volume example like so that's going to delete everything including
+
+the persistent volume.
+
+So now we have no persistent volumes found here.
+
+But let's have a look at whether the files were actually persisted in our minikube or in our node here
+
+in Kubernetes.
+
+So let's run minikube SSH.
+
+And then we can now have a look at whether the mount disks forward slash local one exists.
+
+It does exist.
+
+And if we list the contents here, the file is still available, right?
+
+So even deleting the persistent volume here doesn't mean that the files will be deleted from your local
+
+directory.
+
+That means you could potentially recreate everything and get access to these files by newer pods.
+
+If you were using a dynamically provisioned persistent volumes, then the default policy here that is
+
+specified under the Reclaim the reclaim policy is to delete, and that is then dependent on how the
+
+configuration of the persistent volume works.
+
+Because if the underlying storage mechanism, let's say that you're using an EBS backed or an EFS backed
+
+here for the dynamic provisioning.
+
+And this is in AWS.
+
+Right.
+
+So elastic block storage that's a typical SSD drive.
+
+And elastic file storage that is a network file system.
+
+If the configuration is then to delete the underlying storage here that was dynamically provisioned
+
+then yes, the contents of this persistent volume will also be deleted, but this can all be configured,
+
+and it would also go a little bit beyond the scope of this discussion around local volumes.
+
+So for us here is just good to know that even after deleting the volumes, the files will be present
+
+here.
+
+We can remove everything from the directory if we wish to clean it up to reuse it as a new clean volume,
+
+but otherwise the files will still be available.
+
+Great.
+
+Let's then exit from our from our minikube node.
+
+And I believe that's a great moment for us.
+
+To take a short break, let's just confirm that we have nothing here PVC, PVC and pod.
+
+I believe they are all gone.
+
+That's perfect.
+
+There are no resources found.
+
+So that's it for our discussion around using local volumes.
+
+They are very useful for local development in case you want to test persistent volumes and working with
+
+more persistent data.
+
+So just keep them in mind.
+
+Let's then take a short break and I'll see you in the next lecture.
+
+
+
+Minikube also offers a very simple storage driver and a storage class that allows us to dynamically
+
+provision persistent volumes.
+
+I would like to dedicate a few minutes to explore this with you, because the mechanics here, the process
+
+will be very similar to whenever you are working with a dynamically provisioned persistent volumes backed
+
+by different providers.
+
+So the way for us to see what minikube offers is to start with kubectl get storage class and the storage
+
+class that is created by minikube by default.
+
+Here is this storage class called standard.
+
+This storage class is then used by minikube to create or to dynamically provision a hostpath backed
+
+volume.
+
+We have discussed in the past that Hostpath is not really the best option, and the recommendation from
+
+Kubernetes is to use local instead of hostpath.
+
+However, local does not provide dynamically dynamic provisioning and Hostpath does so minikube offers
+
+this option to us.
+
+It is good enough for us to explore.
+
+It will give us enough things to play around.
+
+So let's describe this storage class to begin with, and we'll simply run kubectl describe storage class
+
+standard.
+
+That is the name of the storage class here.
+
+And then once we do that we will get some information.
+
+And what we can see here that is the name.
+
+And then there is this is default class.
+
+This is marked to yes here.
+
+And this is coming from the annotations.
+
+Let's have a look here.
+
+There should be somewhere perfect here.
+
+Annotations.
+
+Storage class.
+
+Kubernetes is default class true.
+
+That means that whenever we create a persistent volume claim without a storage class, it will default
+
+to using this storage class.
+
+Here you can see now that there is a provisioner here, and this provisioner is responsible behind the
+
+scenes for dynamically creating our persistent volume.
+
+So all we need to do here is to create a persistent volume claim which either does not specify the storage
+
+class name altogether, or that it specifies the storage class name as standard.
+
+We then create this persistent volume claim, and we will see that the persistent volume will be created
+
+behind the scenes and automatically for us.
+
+So in our IDE under the same folder storage persistence.
+
+Let's create a new file here and we will say dynamic dot YAML.
+
+So now here we're just going to create a simple persistent volume claim.
+
+So I'm just going to copy this actually from something else that we already have here I'm opening the
+
+local volume example.
+
+Let's copy this persistent volume claim and then let's paste this here.
+
+So remember from our previous discussions we have always specified the storage class name here to match
+
+the storage class that we have defined in our persistent volume.
+
+So we create the storage class name here that was called local storage.
+
+And then we used the same storage class name here in our persistent volume claim, and that's how we
+
+were able to bind the claim to the respective volume.
+
+Now we are not going to specify this.
+
+We will simply leave this configuration as it is.
+
+And let's change the name here.
+
+We're going to call this dynamic example like so or dynamic PV example.
+
+And let's save this.
+
+Let's come back to the terminal now and let's apply our file.
+
+So kubectl apply dynamic dot YAML.
+
+And you will see that the persistent volume claim dynamic PV example has been created.
+
+We can now get our persistent volume claims.
+
+And we will see that it is already bound right.
+
+So before it used to stay in a pending state, if it did not find a matching persistent volume.
+
+However, you can see that this one here is already bound and there is already a volume that has been
+
+created for us.
+
+So let's inspect this volume that was created for us.
+
+Let's run kubectl describe persistent volume and let's paste the volume ID and as you can see here,
+
+we get all the information.
+
+So it was created or it was provisioned by here the minikube hostpath provisioner that we have seen.
+
+And it also has which path it is mounting behind the scenes in the host.
+
+So any data that we save into this, into this persistent volume here, whenever we mount it as a volume
+
+mount inside of a container, this data will be available for us inside of this directory.
+
+I'm going to split the screen here just for us to SSH into minikube.
+
+And let's have a look at this directory.
+
+So let's change into temp hostpath provisioner default like so.
+
+And then once we list the directories here we will see that our directory is present here.
+
+Now the question is what happens when we delete this persistent volume claim.
+
+So let's scroll up a little bit here.
+
+You will see that the reclaim policy is set to delete.
+
+That means whenever we delete the persistent volume claim, the persistent volume itself will also be
+
+deleted.
+
+So let's run the delete command kubectl delete with dynamic YAML file.
+
+The persistent volume claim has been deleted.
+
+Let's now run kubectl get persistent volumes and we will see that the volume is not available anymore.
+
+If we list the directories here under our original path, we can also see that our data is gone.
+
+Right?
+
+So the the idea here is that the delete reclaim policy, it is deleting everything, including the persistent
+
+volume and the path that was saving the data.
+
+So this is a destructive operation.
+
+That means if you are storing some data that should not be deleted, you should not use the delete reclaim
+
+policy.
+
+You might also be wondering why is the reclaim policy delete here?
+
+Because the as we saw before, the default value that was passed for us was retained whenever we were
+
+using the statically provisioned, persistent volumes.
+
+As it turns out, with dynamically provisioned persistent volumes, the default policy is delete.
+
+And that makes sense because we run into the risk of creating a lot of volumes and of having a lot of
+
+storage not used afterwards.
+
+If we do not delete these volumes, let's clear the screen.
+
+And if you wanted to change the reclaim policy here, then what you would have to do is you would have
+
+to touch the storage class.
+
+So let's let's get the storage class standard here.
+
+And let's have a look at the reclaim policy is here.
+
+So if we were to also get the storage class standard and then output as a YAML, then you will see that
+
+the reclaim policy is set to delete.
+
+If we were to change this to retain in the storage class definition, then all the volumes created dynamically
+
+via this this storage class they would have the reclaim policy also set to retain.
+
+I'm not going to change that here because this is not something that we are managing actively.
+
+This is something that comes with minikube.
+
+So I'm just going to leave the default values.
+
+But just keep that in mind that if you want to retain your dynamically provisioned, persistent volumes,
+
+then you need to set a reclaim policy to retain at the storage class definition level.
+
+Coming back quickly to the IDE, just to reiterate, we have been able to create the persistent volume
+
+dynamically because we did not specify the storage class name, but we could also specify the storage
+
+class name standard like so.
+
+And this is the name that we get here.
+
+Right.
+
+So that's the name here.
+
+And that's the one that we should use whenever we want to use this storage class.
+
+If we were to then run here once again kubectl apply and then let's apply our dynamic file.
+
+Then we should also see that immediately our folder is back.
+
+And we can also confirm that the persistent volume has been created and is bound.
+
+Perfect.
+
+So let's then delete.
+
+And by the way here just to just as a highlight or just as a small comment, if you do try to delete
+
+the persistent volume and the name of the persistent volume is this one here.
+
+If you try to delete the persistent volume, you will see that it's not going to work until the persistent
+
+volume claim is deleted.
+
+So let's exit here from minikube and we can confirm that.
+
+Let's have a look here at the persistent volumes that we have.
+
+And you will see that it is stuck in terminated.
+
+If we were to describe this persistent volume and the name of the persistent volume here, it is quite
+
+long.
+
+So I'm just going to copy paste.
+
+There are no events and there are no information here informing us that this is waiting for the persistent
+
+volume claim to be deleted.
+
+So let's just come to the folder here.
+
+This is a new directory.
+
+So I'm just going to change into the storage persistent folder.
+
+And then from within this folder we are just going to delete here our dynamic file or the resources
+
+created.
+
+And the moment we deleted the persistent volume claim.
+
+Then you can see here that the process has already completed at the top.
+
+So it's just important to keep in mind that if you do wish to delete.
+
+A persistent volume, you do need to delete the persistent volume claim that is bound to.
+
+It before you are able to delete that volume.
+
+Awesome.
+
+So great discussion here around dynamic provisioning.
+
+This is useful in many cases so that we also don't need to SSH into minikube and create the folders
+
+beforehand.
+
+So minikube is taking care of all this for us.
+
+It does make our lives easier.
+
+And this is also normally the path that you would follow.
+
+Not with a hostpath provisioner, but rather with any cloud based or any third party provisioner to
+
+actually create your volumes and store the data.
+
+Behind the scenes.
+
+But that would normally be the path that you would follow when working with Kubernetes in production
+
+environments.
+
+Let's then just confirm here that we have deleted everything so we can get persistent volumes and persistent
+
+volume claims.
+
+There is nothing in our cluster.
+
+We're good to go.
+
+Let's then take a short break and I'll see you in the next lecture.
+
+
+
+Whenever we talk about persistent storage and needing some state in our applications, then statefulsets
+
+always come into the discussion in Kubernetes because they do provide some guarantees.
+
+They do provide some features around stability and pod identity that can be useful whenever we need
+
+pods to have state, or whenever we need pods to have a stable identity and access to a stable storage.
+
+Let's discuss Statefulsets then in a little bit more details.
+
+They help us manage stateful applications more efficiently and statefulsets maintain stable identities
+
+for each pod, ensuring that even if the pod is restarted, it will retain its unique identity and the
+
+connection to persistent storage.
+
+So more specifically, what Statefulsets provide is a stable, unique network identity for each pod
+
+created as part of the stateful set.
+
+Also, a consistent and stable persistent storage here associated with it.
+
+Pods.
+
+each pod also across restarts.
+
+That means if your pod is restarted, it will have.
+
+It will have access to the same persistent storage that it had before.
+
+It also guarantees ordered pod creation, scaling and deletion in case this is necessary whenever we
+
+are working, for example with databases or replicated services.
+
+We can specify a persistent volume claim template in the Pod definition file, and as long as this stays
+
+the same so as long as the volume claim.
+
+Claim template stays the same, then the pod will use the same claim and have and have access to the
+
+same data once again, also across restarts.
+
+So each replica in a stateful set will have its own persistent volume claim, so data is not shared
+
+across different replicas.
+
+This is important to highlight.
+
+If you need data to be shared across different replicas, then this is not the way to go.
+
+One of the expectations.
+
+So let's say stateful sets are designed so that each replica, each pod, has its own persistent volume
+
+claim, and it does not share data with other replicas other pods from this stateful set.
+
+Another thing to keep in mind is that the persistent volumes, they are not deleted automatically when
+
+a replica when a pod is deleted, so you would have to go and manually delete them here.
+
+The pod names and their network identities are also stable, and they will follow the following pattern.
+
+So there will be the stateful set name here, and then a dash and some ordinal index that is increasing.
+
+So we would have let's say pod one or let's say my stateful set zero, my stateful set one, and so
+
+on and so forth.
+
+So we can also use what's called a headless service to expose the pods via more stable domains.
+
+We'll also discuss this in the practical exercises, how we can leverage headless services, what they
+
+are, and how we can use them to expose pods in a stateful set via stable domains or DNS hostnames.
+
+Names.
+
+So just a small quick diagram here to to summarize what we did.
+
+So we have a stateful set here.
+
+Then this stateful set will start the creation of pods in an ordered manner here.
+
+So that's this here.
+
+And the names of the pods will follow the name of the stateful set dash some ordinal index here which
+
+will be increasing.
+
+Now all of this is coupled bound together.
+
+That means this pod here will have then its own persistent volume claim, which will be attached to
+
+its own persistent volume.
+
+If this is statically provisioned, then it should be available.
+
+And it should.
+
+There should be a match here.
+
+Right.
+
+So the the persistent volume claim, the conditions here.
+
+The requests that we provide it would ideally find a match in the persistent volume.
+
+Otherwise this can never be fulfilled.
+
+If this is dynamically provisioned then it's easier because based on the persistent volume claim, the
+
+respective persistent volume will be created.
+
+So if this pod gets restarted then it will get attached to the same persistent volume claim and the
+
+same persistent volume.
+
+Once the first pod is up, then the stateful set will create the second one and the third one, and
+
+each one of them will have their own persistent volume claim and persistent volume.
+
+Now the deletion order is going to be different.
+
+Or if we scale in for example, it will be different because it will start the deletion by the latest
+
+one here or by let's say this would be the youngest pod, the one that was created latest.
+
+Right.
+
+So this would be the one, the first one to be deleted.
+
+Once this one is removed, then the second one would be deleted and then the third one would be deleted.
+
+So this ordering here might be useful in some applications, but I do find that the main benefits here
+
+are the stability around network identity and name identity, as well as this consistent and stable
+
+persistent storage which is associated with each pod.
+
+And let's then take a short break before we start practicing, and I'll see you in the next lecture.
+
+
+
+Let's now spend a couple of minutes to discuss stateful sets and how we can use them to create stateful
+
+applications.
+
+So remember stateful sets.
+
+They have a few guarantees from the Kubernetes side, and two important guarantees is that their name
+
+will be stable as well as their DNS entries.
+
+That means when we combine them with headless services, we can then obtain a stable DNS that we can
+
+use to reach specific pods within that stateful set, and this was not possible with traditional deployments.
+
+We also get the guarantee that a certain pod will be connected to its persistent volume claim template,
+
+and to the same persistent volume claim behind the scenes.
+
+That means that if the pod gets restarted, gets deleted and recreated for whatever reason, it will
+
+still have access.
+
+It will be automatically connected, it will automatically leverage the same persistent volume claim,
+
+and it will have access to the same data.
+
+So before we get started, let's ssh into minikube here just so that we can create a couple of folders
+
+inside of our node that we will use for our persistent volume claims.
+
+So I'm going to create three folders here.
+
+Let's make three directories.
+
+First one is going to be user or actually let's use the mount here I believe that's the convention we
+
+have been doing disks.
+
+And then let's use statefulset.
+
+Let's s here's S zero.
+
+Let's then create ss one and let's create ss two.
+
+And then we also would like to change here the mode.
+
+Let's add 777 to all of this folder.
+
+So mount disks as s zero.
+
+And we're going to do the same for oops.
+
+We're going to do the same here for one.
+
+And we'll also do the same for two.
+
+Right.
+
+So now we have three folders here.
+
+We can create persistent volumes using each of the folders.
+
+We could also create different persistent volumes, all mounting the same folder here.
+
+But I just want to keep things separate, or at least have the possibility of keeping things separate
+
+for demonstration purposes.
+
+How you structure this?
+
+It really depends on your use case.
+
+If you want multiple pods from your replica set to in the end have access to the same files here, then
+
+you would probably use the same folder.
+
+But if you want them to have independent storage, then you can use independent folders.
+
+And if you are using dynamically provisioned persistent volumes and the back end as well the medium
+
+where it is stored, then whenever you create your persistent volume claim templates, they would in
+
+the end also lead to different persistent volumes being created.
+
+Let's exit this so we are good to go from the minikube side.
+
+Let's now open here a new directory.
+
+So I'm just going to change one directory here.
+
+And I'm going to create a new directory I'm going to call this stateful sets like so.
+
+Let's change into stateful sets so that we have a clean slate to work with.
+
+And let's open this in the IDE of your choice.
+
+That's great.
+
+So now we are inside of the same directory here.
+
+No files.
+
+Let's create then our first stateful set file definition.
+
+And actually for us to create this stateful set we would first need to create the persistent volume.
+
+So let's create a new file called PVS.
+
+And that stands for persistent volumes.
+
+We're just going to create all the persistent volumes in the same file.
+
+So this is really API version here.
+
+So really copy pasting kind of from the previous one.
+
+So I'm just going to come here to the local volume example file that we have.
+
+I'm going to copy the contents here of this file.
+
+And then let's just paste this here.
+
+All right.
+
+So now we have one persistent volume.
+
+We're going to say here the name for this is going to be stateful set zero.
+
+And this will mount in our disks.
+
+Statefulset.
+
+Zero like so.
+
+Let's see what else we need to change here.
+
+So the name of the persistent volume is good.
+
+That's already updated.
+
+We then have one gigabyte file system.
+
+Maybe we could even put 128 maybe bytes just to make sure that we don't consume too much capacity,
+
+even though I think that like nowadays.
+
+That's fine.
+
+Right.
+
+Uh, persistent volume claim reclaim policy.
+
+We can leave set here or we can remove.
+
+Let's remove here for the for the sake of just keeping this file a little bit shorter, the volume mode
+
+we can also remove it will default to file system.
+
+The local path here that we will mount.
+
+That is mount disk SS zero here.
+
+So that's good.
+
+And the node affinity will also be important because we want to make sure that we mount all this inside
+
+of our minikube node.
+
+All right.
+
+So we have one persistent volume here.
+
+And then let's now create another persistent volume here, so let's just add it here.
+
+Persistent volume two.
+
+So that's going to be also the stateful set one one here.
+
+So instead of zero let's say now stateful set one.
+
+And then we will also have a third one.
+
+So let's copy this and let's paste it here.
+
+And let's have now the stateful set to like so and stateful set to as well.
+
+That is looking good.
+
+Unfortunately as I know there is quite a bit of replication here or duplication of code and just a few
+
+things that are changing.
+
+And in reality we wouldn't use just plain Kubernetes for this.
+
+We would probably couple this with helm so that we can dynamically generate the different object definitions
+
+here, while also leveraging helm templates.
+
+Now, one thing that I want to highlight is that with the persistent volumes here, and the persistent
+
+volume claims that we will use in the stateful sets, there is nothing that ultimately guarantees that
+
+SS two will be connected to our third pod in the Statefulset, and that SS one will be connected to
+
+our second pod, and that SS zero will be connected to our first pod.
+
+I just want to highlight that the persistent volume claims they will look for available persistent volumes,
+
+but it doesn't mean that they will be fulfilled in the order here.
+
+Which ordered the Statefulset guarantees refers to actually the order of the pods that they are created,
+
+and also that they are deleted.
+
+So before we get started with defining the statefulset, let's quickly come to the terminal here.
+
+Let's clear the console and let's now run kubectl apply and let's apply our PVS dot YAML.
+
+So I want to make sure that we have three volumes three persistent volumes created.
+
+That's great.
+
+And they are all available right.
+
+So as you can see here, if no persistent volume claim has been bound to a persistent volume, it remains
+
+in the available status.
+
+
+Let's then create our stateful set definition here.
+
+And I would like to come back actually to the definition of the pods that we had using BusyBox.
+
+So I'm just going to come here to the local volume example.
+
+Once again let's get both the pod and the persistent volume claim, because this might be useful also
+
+for creating our persistent volume claim templates.
+
+Let's save this.
+
+Let's come back to our stateful sets directory and let's just paste it here.
+
+Now we're not going to use this as it is because we will use stateful sets.
+
+But I just want to have an overview of what we have here.
+
+So let's get started with creating our stateful set.
+
+The API version will be APS forward slash v1.
+
+The kind here will be stateful set.
+
+And now we would like to create our metadata.
+
+And the name here will be very straightforward.
+
+It can be anything.
+
+So we're just going to say demo stateful set.
+
+And now in the specifications, we will have a bit more information.
+
+There are a couple of top level fields here, so we can set a service name if we wish to do so.
+
+And that will simply will simply set this to BusyBox.
+
+We can also use or we can also define the number of replicas.
+
+And that's going to be two replicas.
+
+And we should also specify the selector here similar to the deployment.
+
+Basically the stateful set is also managing a set of pods.
+
+So it needs to know which pods it will manage.
+
+We also define the template and we also define what is called a volume claim template.
+
+Right.
+
+So these are the top level fields that we will start defining here.
+
+And they will specify the first one.
+
+The selector is which pods are actually managed by this stateful set.
+
+The template here very similar to how we worked with deployments.
+
+It specifies templates for pods.
+
+The difference here is that the volume claim template.
+
+It also is used by Kubernetes to create volume claims or persistent volume claims automatically.
+
+So this is also something that is new.
+
+And this prevents us from having to create this persistent volume claims manually.
+
+So let's start with the selector.
+
+Here we're going to use match labels and we'll simply use here app.
+
+We're going to call this let's say BusyBox just like so.
+
+And the template here is going to be fairly similar to what we have in our pod.
+
+We're going to copy both the metadata and the specification here.
+
+Let's copy this and let's paste under the template.
+
+And let's now fix a few things right.
+
+So we have spec metadata here.
+
+You can see that this is not really very well aligned.
+
+So let's just fix that.
+
+And that is looking a little bit better.
+
+So now we have a metadata for our pods.
+
+We should not include a name because that's going to be managed by the metadata Name of the stateful
+
+set plus an ordinal index here that will be increasing.
+
+So we will update the labels from name to have the app BusyBox like so.
+
+And then the container here will be just our BusyBox container.
+
+Once again that's the name of the container, not of the any labels or of the stateful set.
+
+This could be anything we wish to use.
+
+We will also sleep for one hour here.
+
+The resources are here and now we can also create our volume mounts.
+
+We're going to use once again a local volume.
+
+And we're going to mount this under forward slash mount forward slash local.
+
+Another thing here is that we don't really have access to the index inside of this definition.
+
+Right.
+
+So now we'll have two stateful sets created via the replicas here.
+
+But we cannot use something like let's say we would like to mount here and then interpolate some kind
+
+of index like.
+
+So this is not currently supported.
+
+So we're not gonna change that.
+
+We're just going to leave the Mount local like so now we will not specify volumes here.
+
+So I'm just going to remove this and we will leave the volume claim template section here.
+
+Let's fix that.
+
+This should be a little bit better aligned.
+
+So just make sure that it is aligned to the template section like so right.
+
+So we have selector template and then volume claim templates.
+
+And this is a list of objects where we will specify once again metadata and specifications.
+
+Right.
+
+So metadata and spec and very similar to how we bring the pod definition here.
+
+We actually also bring persistent volume claim definitions here.
+
+So the metadata will be let's say here the name is going to be Local storage.
+
+And the specification here will be access modes.
+
+So we're just going to specify that we want to create a volume claim template that has a read write
+
+once, like so.
+
+So let's copy the read write once.
+
+Let's come here, let's paste it here.
+
+And the storage class name here.
+
+Storage class name.
+
+It will also be from our persistent volumes.
+
+That's going to be the local storage.
+
+So let's copy this and paste it here.
+
+And then we will also have resources requests.
+
+And then we'll say storage.
+
+And that's going to be I believe that we are using 128 Mebibytes.
+
+Right.
+
+So let's just copy this and let's paste it here.
+
+And as you can see this is very similar to what we have defined here.
+
+The only exception is that we are not creating this volume mode.
+
+We are just leaving it out.
+
+So let's now remove this persistent volume claim because we don't need it anymore.
+
+And we also don't need the pod anymore.
+
+Now you might be wondering what happens actually with this name of local storage here.
+
+And actually, this is the name that we should match our name of the volume mounts here.
+
+So maybe this is getting a little bit confusing with the storage class name I will just update to match
+
+actually the name that we already have defined in our volume mounts.
+
+In this case here, whenever we are creating a stateful set, we don't need to specify the volumes section
+
+under the pod template.
+
+This is very important because before when we were working solely with persistent volumes and persistent
+
+volume claims, we would also specify a volumes definition here in on the same level as the containers
+
+in the Pod specification.
+
+But with stateful sets, we don't need to do that.
+
+Kubernetes will manage behind the scenes, and it will create the necessary volume definitions in our
+
+pods, and they will match this metadata.
+
+This name here in the metadata we can also add multiple volume claim templates.
+
+If we wish to have multiple persistent volumes mounted in our container, then there is nothing that
+
+is stopping us from adding a second one.
+
+So you could very well come here, create a second one and then change the name to Local volume two,
+
+for example.
+
+And then we could also create a second volume mount by just copying this here and then pasting it here.
+
+Local volume two Mount local two for example.
+
+This is perfectly fine.
+
+So we can also mount persistent storage from different sources, and we can use that inside of our container
+
+for now.
+
+I think that this definition here is already getting a little bit confusing enough, so I'm not going
+
+to go into any other types of customizations here, but if you go through the documentation, then you
+
+would also see that there are other ways that we can customize our stateful set.
+
+Let's save our files and let's now come back to the terminal here, and let's now apply our stateful
+
+set file like so.
+
+And you will see that the demo stateful set will be created.
+
+So now we can get our pods here.
+
+And you will see that instead of having a random string in the end here they actually have very stable
+
+IDs.
+
+So we have the ID zero, the ID one here.
+
+And as you can see, if we have a look at the age, we can see that the one with ID zero has been created
+
+before, the one with ID one.
+
+And the stateful set also makes sure that this pod here gets the.
+
+So the first pod, or let's say the previous pod gets into a healthy state before creating the next
+
+pod.
+
+We can also have a look at the stateful set.
+
+So kubectl get stateful set.
+
+I'm not sure whether this has a shorthand.
+
+I don't know if SS stands for stateful set.
+
+No it doesn't.
+
+But we could also describe then the stateful set and have a look at its configuration if we have a look
+
+at the persistent volumes.
+
+So let's just clear here.
+
+Have a look at the persistent volumes.
+
+We will see that we have two volumes which are bound and still a third one which is available.
+
+If we were to now have a look at the persistent volume claims, we will see there are two persistent
+
+volume claims and they follow the same principle here.
+
+So local volume stands for the name of the persistent volume claim that we have specified here in the
+
+template.
+
+That is the name.
+
+In addition to that, Kubernetes is appending here the name of the stateful set.
+
+So demo stateful set.
+
+And then it's also appending an index here.
+
+And you can see that this is actually bound to the stateful set zero.
+
+Stateful set one.
+
+And these are the volumes.
+
+Right.
+
+So these are actually not the stateful set pods but the volumes that we have created.
+
+You can also identify this match here on the top.
+
+Now if we were to actually delete a pod.
+
+So let's get the pods here and let's now try kubectl delete pod demo ss zero.
+
+And the moment we do that it will take a little bit of time.
+
+Let me add here the force.
+
+Once again let's have a look.
+
+That's looking good.
+
+And now if I were to get the pods once again we will see that the pod was recreated with exactly the
+
+same index in comparison to deployments.
+
+This was not really possible.
+
+So the the suffix here that was appended by deployments was a random string.
+
+That means if pods were recreated, they would get a new random string at the end of them.
+
+With Statefulsets, it is possible to have this in a more stable situation or scenario, and that has
+
+its own use cases.
+
+So let's now exec into let's clear this.
+
+Let's now exec into one of the spots.
+
+So exec it and the name of the pod we're going to go with demo SS S0.
+
+And what we want to execute here is the shell command.
+
+That's perfect.
+
+So we have mounted our volume under the forward slash mount forward slash local directory.
+
+So let's just echo something here.
+
+Echo hello from SS zero or from demo statefulset zero.
+
+And we're gonna write this to Mount local.
+
+Hello dot TXT.
+
+All right.
+
+So now we have the file here.
+
+Let's exit.
+
+And if we were to now execute once again into this pod and just get the contents of the file.
+
+So let's just copy this here and let's paste it here.
+
+We will get hello from demo Statefulset zero.
+
+If we were to now exec into the second pod that was created by this statefulset, and we were to try
+
+to actually print the results here, we will see that it's not possible.
+
+Right.
+
+So the persistent volumes, they are mounted once again under different directories.
+
+That was a conscious choice that we did here.
+
+So they don't really share the underlying directory.
+
+Right.
+
+That means the data here from our first pod is or actually from our first pod here is written under
+
+SS zero, while the data from our second pod will be written under SS one.
+
+So we cannot retrieve this data here.
+
+Let's exit.
+
+And let's now delete once again our pod with or the pod SS zero here.
+
+And let's have a look at what happens once that pod is recreated.
+
+So the pod was recreated here.
+
+And we can now exec into this pod once again.
+
+And if we were to print the contents, oops.
+
+If we were to print the contents of Mount Local hello.txt.
+
+Oops, sorry, I exec into the wrong one here.
+
+I exec into the one.
+
+Okay, I was wondering what what kind of mistake I did, but that that was just the name of the pod.
+
+Apologies for that.
+
+Let's exec into the one with zero here.
+
+And now let's get the contents of this file.
+
+And.
+
+Perfect.
+
+The file is still available here.
+
+That means the statefulset took care of correctly identifying the correct persistent volume claim to
+
+bind to this pod as well.
+
+And so if we have a look at the persistent volume claims here, we will see that their age didn't change.
+
+So the persistent volume claims were not deleted.
+
+They were kept whenever we deleted the pods.
+
+And then when the pods were recreated, Kubernetes was smart enough to identify that this claim actually
+
+should be connected to our SS zero or demo SS zero pod here, and that's how we can get our pods to
+
+have a stable storage behind the scenes.
+
+Awesome.
+
+So hopefully this helps understanding a little bit more how the persistent volumes and stateful sets
+
+work with each other.
+
+And I believe that's a great moment for us to take a short break and let's come back in the next lecture.
+
+
+Now that we know how to work with stateful sets and statically provisioned volumes, remember we did
+
+create persistent volumes here manually by using the local volume type.
+
+And we had yes, to enter into minikube, create these different directories here and set everything
+
+up so that this would work as expected.
+
+We can now experiment transitioning from the statically provisioned persistent volumes to the dynamically
+
+provisioned persistent volumes.
+
+And as you might have guessed, this is a very simple migration in our stateful set file.
+
+All that it requires is to either comment out this or completely remove this line.
+
+Here we can remove that like so, or we can just change the storage class name to standard.
+
+I do prefer to keep the storage class name here explicitly mentioned for the very simple reason that
+
+if we do not include that and then we change which storage class is default behind the scenes, then
+
+there might be unexpected behavior here.
+
+So if we just fix the storage class name, then we can rest assured that the storage class that will
+
+always be used is the one with the name standard.
+
+So just to confirm here, this standard name is the name of the storage class.
+
+It is not the fact that it's set as default, and the fact that it's set as a default is represented
+
+by this default here next to its name.
+
+Right.
+
+So now if we use this storage class name, then the persistent volume claims they will lead to the creation
+
+of the underlying persistent volumes.
+
+So all we have to do here and just make sure that you are inside of the same folder Statefulsets.
+
+Let's apply then the stateful set file.
+
+The moment we do that, Kubernetes will want to create two replicas, right?
+
+So remember here that we have two replicas.
+
+They are now up and running.
+
+That's all good.
+
+And now let's get our persistent volume claims.
+
+And we see that we get two persistent volume claims.
+
+The names of our persistent volume claims they are composite.
+
+So this is the metadata dot name key that is coming from here.
+
+And then we also have the pod name here.
+
+And this stable index at the end of the pod name is really what allows Kubernetes to also identify that,
+
+hey, if the pod called demo stateful set one is recreated, then we will link this persistent volume
+
+claim here with the pod.
+
+Right.
+
+So just to clarify if we were to describe our pod.
+
+So let's describe the pod demo dash S0 like so.
+
+Then we will see that under our volumes here the local volume is the name of the volume.
+
+The type is persistent volume claim.
+
+The claim name is this one.
+
+And this is then behind the scenes.
+
+This persistent volume claim is bound to a persistent volume that was dynamically created for us.
+
+Let's clear the screen here.
+
+And now we can also SSH into minikube.
+
+So let's SSH into minikube here.
+
+And then we can confirm also that the folders under our host path default were created successfully.
+
+We have the two folders, one for each of the persistent volumes, and we can then start persisting
+
+data.
+
+Another important aspect here is that when we delete a stateful set.
+
+So let's just delete our stateful set once again.
+
+Then the persistent volumes and the persistent volume claims they are not deleted.
+
+Right.
+
+So kubectl get persistent volume claim they remain alive and they are still bound to the underlying
+
+to the same underlying persistent volumes.
+
+And this makes sense because stateful sets they are by definition stateful applications.
+
+And if we were to emit or if Kubernetes were to immediately delete our persistent volume claims and
+
+the underlying persistent volumes, then we would basically just lose this data, right?
+
+So we can definitely delete them manually so we can delete them with the kubectl delete persistent volume
+
+claim.
+
+And then we can pass the name here.
+
+Or we can also pass the Al flag like so to delete both persistent volume claims.
+
+We can do the same with our volumes.
+
+So kubectl delete persistent volumes all and hear the persistent volumes.
+
+They were automatically removed because that is the reclaim policy that is set in our storage class
+
+standard.
+
+Right.
+
+So if we have a look here let's describe our here.
+
+Perfect.
+
+The reclaim policy is already here.
+
+So that's the delete reclaim policy.
+
+That's great.
+
+So we have migrated our stateful set to working with dynamically provisioned persistent volumes.
+
+Another nice migration here for us to practice a little bit more and explore a little bit more the functionality
+
+of Kubernetes and of minikube.
+
+Let's come back here to the IDE.
+
+I just want to make sure that the directory is inside of minikube are deleted, and sometimes they are
+
+not.
+
+So the cleanup sometimes doesn't happen.
+
+And let's have a look.
+
+Whether they were removed perfect.
+
+They were removed.
+
+So we are good to go.
+
+Let's then take a short break and I'll see you in the next lecture.
+
+
+
+
+Let's discuss headless services, why they are useful, and how we can couple them or use them together
+
+with stateful sets to provide a stable DNS identity.
+
+DNS entry for our stateful set pods.
+
+The definition of a headless service is very similar to any other service that we have created.
+
+So let's just create a new file here.
+
+We'll call service dot YAML like so.
+
+And then here we will define the API version that's going to be v1.
+
+The kind will be service metadata.
+
+And this is important that we keep in mind the name of the service here is is important.
+
+We need to inform this also in our stateful set file.
+
+So let's just choose this.
+
+We're going to call this color service like so.
+
+And then the specifications we will redirect traffic on the port 80.
+
+Target port here will also be 80.
+
+And let's then define here our selector.
+
+And the selector will just use the app label with the color API value.
+
+So far this is pretty much the Or.
+
+Actually this is a cluster IP service, right?
+
+So this is the definition for a cluster IP service.
+
+To make this service headless, all we have to do is to add a cluster IP option here and set this to
+
+none.
+
+It's important that the IP is both in uppercase.
+
+And the non here is not the equivalent of not setting the option.
+
+This is a special string in Kubernetes and it reveals or it signals the intention of creating a headless
+
+service.
+
+So we've been talking headless service.
+
+Headless service.
+
+What is the difference.
+
+Well what a headless service does.
+
+The difference is that it does not have a cluster IP assigned to it.
+
+So it does not provide any load balancing.
+
+And we cannot talk to it via its cluster IP because it doesn't have one, nor via just its name.
+
+So the whole point of a headless service is to actually just provide a stable DNS entry that we can
+
+use to talk to specific pods.
+
+This, as you might imagine, is very useful in the context of stateful sets because our pods, they
+
+are supposed to have state, right?
+
+So let's now just apply here our service like so, and we will see that we have the color service created
+
+here.
+
+Let's then get our services and we will see that there is no cluster IP here.
+
+If we were to now describe the service color service like so, we will see that there are no end points.
+
+So this is useful or it's useful for us to talk to specific pods primarily in the context of stateful
+
+sets.
+
+You can think of a stateful set as maybe a database application.
+
+And then our data is saved in a specific pod.
+
+And we want to talk directly to that pod.
+
+The default load balancing that cluster IP and node port services provide.
+
+It makes that virtually impossible because the load or the traffic is redirected to different pods every
+
+time we hit the service.
+
+and that's where headless services come into play.
+
+They enable us to talk to specific pods via their pod names.
+
+So let's create our stateful set here.
+
+And I do apologize for using the color API application.
+
+Once again, the color API application is not a stateful application, but it will enable us to visualize
+
+this talking to specific pods behind the scenes a little bit later on in the course, we will also implement
+
+a MongoDB database in Kubernetes, and we will use stateful sets and headless services.
+
+We'll practice this once again and there we will see the difference or the behavior of talking to different
+
+pods whenever they have different data.
+
+So let's just explore here the behavior rather than ensuring that we are working with a directly stateful
+
+application here.
+
+So the kind is going to be stateful set.
+
+We're going to call this the color stateful set like so um and let's remove here the error here.
+
+And the selector match labels.
+
+That's going to be color API like so.
+
+Let's also add the name here and the name here as well.
+
+And let's then change the image to use our LM Academy image or whatever username you're using here.
+
+Call the API and the version is 1.2.1.
+
+We can leave the volume amount here with W-w-w.
+
+Or we can actually just change this to dummy data because once again, we don't really have any stateful
+
+data in our application.
+
+Let's just change this to temp data like so.
+
+And here we have the metadata.
+
+That's good.
+
+The specification access mode read write once and let's then set the storage class name like so.
+
+And this will be the standard class name the standard storage class.
+
+This is already, as already mentioned coming by default with minikube.
+
+And it does allow dynamic provisioning of Hostpath volume types.
+
+So let's see whether there is anything else we need to update.
+
+Yes, there is the service name here.
+
+As I mentioned before, the service name it must match the service here.
+
+So if these names don't match then this is not going to work.
+
+So just add the color service here as the service name.
+
+And let's increase this replicas to three.
+
+Right.
+
+So this is not going to make any difference for us.
+
+Now I just want to have three replicas here for us to experiment with.
+
+So let's scroll down a little bit.
+
+And I believe that everything is looking good here.
+
+Let's save this.
+
+Let's now come back to the terminal.
+
+Let's clear the screen and let's run kubectl apply color statefulset like so.
+
+We can also watch the creation of the of the pods.
+
+So let's see if the pods are already created.
+
+Now we have just one here.
+
+Perfect container creating running.
+
+Then we see that the second one is created.
+
+And now the third one will be created.
+
+Perfect.
+
+So we have our three pods here if we were to now describe our service.
+
+So let's describe our service once again we will see that we have three endpoints here.
+
+The pods were already registered with the service and we should be able to reach them by name.
+
+So now the name of the pods are color Statefulset or SS here.
+
+And then zero, one and two.
+
+We don't have any pod that we can SSH into let's or that we can exec into.
+
+Sorry for that.
+
+So let's just create a debug dot YAML pod here.
+
+And the kind will be pod.
+
+And then we can just use here let's say debug like so.
+
+Or actually let's call this curl.
+
+And then here we're going to use our Alpine curl image.
+
+Right.
+
+So let's just use here LM Academy for slash alpine dash curl version 1.0.0.
+
+And this just allows us to quickly run curl commands.
+
+Let's save this.
+
+Let's come back to the terminal.
+
+Let's then apply this new file here the debug file.
+
+And let's confirm that the pod is up and running.
+
+That's perfect.
+
+So now we can exec into this curl pod and run the shell command.
+
+Now we get our terminal.
+
+And let's clear here.
+
+Let's see if we can clear the screen.
+
+Perfect.
+
+So now for us to reach out to our pods in the statefulset.
+
+What we will use here if we are inside of the same namespace is the pod name.
+
+So I'm just going to come back here.
+
+Let's take that's going to be color dash SS-0 and then dot the name of the service.
+
+Let's come here to the service.
+
+That's going to be color SVC like so.
+
+So if we send a curl request to this address here from within the same namespace, as you can see we
+
+will talk directly to the pod color ss zero.
+
+If we were to then also send a request to forward slash API, then we can confirm that this is also
+
+working as expected.
+
+If we were to send a core request now to a second pod, let's say to the dash two here, then we will
+
+be redirected to this Dash two pod.
+
+right?
+
+So as you can see here, we are always being redirected to the same pod.
+
+Let's try to send a core request just to the service itself.
+
+And as you can see, the moment we do this, we are redirected to the first pod.
+
+That's great.
+
+Let's clear the screen.
+
+And we can also use here.
+
+So let's run.
+
+The name will be color ss zero dot color SVC.
+
+And we can also use the fully qualified domain name with the default or dot default dot svc dot cluster
+
+dot local.
+
+That's a very long one.
+
+But this is what we would use if we wanted to talk to a specific pod from a specific stateful set within
+
+another namespace.
+
+It will just change the default here to the namespace name.
+
+And then we would be able to talk to these pods.
+
+And so this is what the headless service is actually doing for us.
+
+It's basically just enabling us to reach out to very specific pods that are backed up by a stateful
+
+set.
+
+Once again, because we are talking about stateful sets, this makes sense, right?
+
+So stateful sets would create stateful pods.
+
+And each pod has a persistent has a stable identity in terms of storage as well.
+
+That means if the first pod gets deleted and recreated, then it will be assigned to the same volume,
+
+claim to the same persistent volume claim, and the same underlying persistent volume.
+
+That means having this stability to reach out to the same pod is a very desirable characteristic.
+
+That's great.
+
+So hopefully the concept of headless services and what they enable us to do is clear.
+
+I just want to make a small comment.
+
+I did run into a couple of bugs when experimenting in different computers, and at times let me clear
+
+here the screen.
+
+At times, whenever I try to just reach out to the pod via the short name like this or color dash SVC.
+
+It has not been always working for me, so sometimes this would not resolve to the actual underlying
+
+pod, but using the fully qualified name domain would.
+
+So I don't know if this is a bug that is somehow present either in Kubernetes or in the core DNS service
+
+that is handling this DNS resolution behind the scenes or in minikube.
+
+I don't know where the source of the bug is, but I just want to inform you in case you come across
+
+this.
+
+Now, another small thing I do tend to create the service before the stateful set, and when I created
+
+things in different orders orders.
+
+Sometimes the service would not register the pods from the stateful set correctly.
+
+Now once again, these are all intermittent things, but I'm just mentioning that in case you run into
+
+this issue.
+
+So if the pods are not identified or not picked up by the service, then try to delete the stateful
+
+set and the service and then recreate first the service and then the stateful set.
+
+If even after that things don't work, then just as always, don't hesitate to use the Q&A section.
+
+More than happy to try to find a solution together with you.
+
+That's great.
+
+So that's it for this short discussion around headless services, let's come back to the terminal and
+
+let's clean up our cluster.
+
+So I'm going to delete with force here.
+
+And I'm just going to delete everything right.
+
+So here this once again is a controlled environment.
+
+So there's no problem for us to delete.
+
+And even so after we do that if you do wish to delete the persistent volumes then you would also have
+
+to do that manually.
+
+So we can delete our persistent volume claims manually.
+
+Here all the three claims will be deleted, and then the persistent volumes should also be deleted behind
+
+the scenes since they are dynamically provisioned.
+
+That's great.
+
+So now we are with a clean state.
+
+Once again, let's take a short break and I'll see you in the next lecture.
