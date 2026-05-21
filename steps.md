@@ -1,4 +1,5 @@
 ## Steps we followed
+
 First, we create a simple express app and Dockerize it.
 
 ```sh
