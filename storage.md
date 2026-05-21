@@ -144,6 +144,39 @@ That means:
 
 This makes it a good fit for temporary storage, but not for important long-term data.
 
+Example:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-demo
+spec:
+  volumes:
+    - name: shared-cache
+      emptyDir: {}
+
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: shared-cache
+          mountPath: /cache
+
+    - name: helper
+      image: busybox
+      command: ["sh", "-c", "while true; do date >> /cache/time.log; sleep 10; done"]
+      volumeMounts:
+        - name: shared-cache
+          mountPath: /cache
+```
+
+In this example:
+
+- both containers share the same temporary directory
+- the data survives container restarts inside the Pod
+- the data disappears when the Pod is deleted
+
 ## Local Node Storage
 
 The notes then discuss storage that exists on the node itself.
@@ -179,6 +212,29 @@ You may still see it in:
 
 But it is generally not the preferred choice for normal application storage in production.
 
+Example:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-demo
+spec:
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: host-logs
+          mountPath: /host-logs
+  volumes:
+    - name: host-logs
+      hostPath:
+        path: /var/log
+        type: Directory
+```
+
+This mounts the node's `/var/log` directory into the container.
+
 ## `local`
 
 The notes recommend `local` as the safer and more structured alternative to `hostPath`.
@@ -201,6 +257,48 @@ So the key tradeoff of `local` storage is:
 
 - it is more durable than Pod-local storage
 - but it is still tied to one node
+
+Example `PersistentVolume` using `local` storage:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv-1
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /mnt/disks/app-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - worker-node-1
+```
+
+Example matching `PersistentVolumeClaim`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 5Gi
+```
 
 ---
 
@@ -237,6 +335,38 @@ storage backend -> PV -> PVC -> Pod
 
 The notes stress that these resources usually need to exist before the Pod can consume them.
 
+Example `PersistentVolume`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/app-data
+```
+
+Example `PersistentVolumeClaim`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+```
+
 ---
 
 # Static and Dynamic Provisioning
@@ -264,6 +394,36 @@ This is the more cloud-native and scalable approach in many environments.
 
 A StorageClass is usually involved in this flow, even though the source notes do not go deep into it yet.
 
+Example `StorageClass`:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp3
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+```
+
+Example dynamically provisioned claim:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  storageClassName: fast-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+```
+
 ---
 
 # ConfigMap and Secret Volumes
@@ -285,6 +445,40 @@ This is useful for things like:
 - feature flags
 - non-sensitive environment-specific values
 
+Example `ConfigMap`:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  app.properties: |
+    APP_ENV=dev
+    LOG_LEVEL=debug
+```
+
+Example mounting that ConfigMap as a volume:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-volume-demo
+spec:
+  volumes:
+    - name: config-volume
+      configMap:
+        name: app-config
+
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+```
+
 ## Secret Volumes
 
 Secrets can also be mounted as volumes.
@@ -303,6 +497,41 @@ The notes correctly emphasize an important practice:
 - secret values should not be hardcoded into repository files
 
 Even when using Secrets, we still need to think carefully about how the secret data is created, loaded, and protected.
+
+Example `Secret`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: c2VjcmV0MTIz
+```
+
+Example mounting that Secret as a volume:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-volume-demo
+spec:
+  volumes:
+    - name: secret-volume
+      secret:
+        secretName: app-secret
+
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: secret-volume
+          mountPath: /etc/secret-data
+          readOnly: true
+```
 
 ---
 
@@ -478,6 +707,29 @@ This shows the main idea:
 - the Pod defines a volume
 - the volume uses a PVC
 - the container mounts that volume at a filesystem path
+
+Useful commands for checking storage resources:
+
+```bash
+kubectl get pv
+kubectl get pvc
+kubectl describe pvc app-pvc
+kubectl get storageclass
+kubectl describe pod storage-demo
+```
+
+## Example Workflow
+
+One practical workflow for learning this topic is:
+
+1. Create a `PersistentVolumeClaim`
+2. Create a Pod that mounts the claim
+3. Write a file into the mounted directory
+4. Delete the Pod
+5. Recreate the Pod
+6. Verify whether the file still exists
+
+If the storage is truly persistent, the data should still be there after the Pod is recreated.
 
 ---
 
