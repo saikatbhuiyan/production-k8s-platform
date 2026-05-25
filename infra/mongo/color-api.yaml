@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: color-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: color-api
+  template:
+    metadata:
+      labels:
+        app: color-api
+    spec:
+      containers:
+        - name: color-api
+          image: 01919965532/color-api:1.0.0
+          ports:
+          - containerPort: 80
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-colordb-creds
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-colordb-creds
+                  key: password
+            - name: DB_HOST
+              value: "mongo-svc"
+            - name: DB_PORT
+              value: "27017"
+            - name: DB_NAME
+              value: "colordb"
+            - name: DB_URL
+              value: "mongodb://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
