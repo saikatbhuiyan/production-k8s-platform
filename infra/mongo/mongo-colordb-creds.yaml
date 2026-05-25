@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-colordb-creds
+  labels:
+    app: mongo
+type: Opaque
+data:
+  username: Y29sb3JkYl91c2Vy
+  password: Y29sb3JkYl9wYXNzd29yZA==
