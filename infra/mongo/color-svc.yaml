@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: color-svc
 spec:
+  type: NodePort
   selector:
     app: color-api
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
+      nodePort: 30080
