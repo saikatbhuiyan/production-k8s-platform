@@ -10,6 +10,10 @@ resource "aws_instance" "web" {
     volume_size           = 10
     volume_type           = "gp3"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group" "public_http_traffic" {
