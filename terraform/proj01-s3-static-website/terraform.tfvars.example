@@ -1,0 +1,5 @@
+aws_region       = "ap-southeast-1"
+project_name     = "proj01-static-website"
+environment      = "dev"
+site_domain      = "www.example.com"
+hosted_zone_name = "example.com"
