@@ -8,7 +8,14 @@ variable "ec2_instance_type" {
     condition     = contains(["t2.micro", "t3.micro", "t3a.micro"], var.ec2_instance_type)
     error_message = "The EC2 instance type must be either 't2.micro', 't3.micro', or 't3a.micro'."
   }
+
+  # validation {
+  #   condition     = startswith(var.ec2_instance_type, "t2.micro")
+  #   error_message = "The EC2 instance type must start with 't2.micro'."
+  # }
 }
+
+# TF_VAR_ec2_instance_type=t3.micro
 
 variable "ec2_volume_config" {
   type = object({
