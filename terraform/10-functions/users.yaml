@@ -1,0 +1,5 @@
+users:
+- name: Shahabuddin
+  group: developers
+- name: John
+  group: auditors
